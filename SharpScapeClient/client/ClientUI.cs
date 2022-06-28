@@ -7,15 +7,17 @@ public class ClientUI : Control
 {
 	public Utils _utils;
 	public Client _client;
-	public RichTextLabel _logDest;
+    public RichTextLabel _logDest;
 	public LineEdit _lineEdit;
 	public LineEdit _host;
 	public OptionButton _writeMode;
 	public override void _Ready()
 	{
 		_utils=GetNode<Utils>("/root/Utils");
-		_client = GetNode<Client>("Client");
-		_logDest = GetNode<RichTextLabel>("Panel/VBoxContainer/RichTextLabel");
+		_client = GetNode<Client>("/root/WebsocketClient");
+		_client.Connect("WriteLine", this, "_OnClientWriteLine");
+		_client.Websocket.Connect("connection_established", this, "_OnClientConnectionEstablished");
+		_logDest = GetNode<RichTextLabel>("Panel/VBoxContainer/MainOutput");
 		_lineEdit = GetNode<LineEdit>("Panel/VBoxContainer/Send/LineEdit");
 		_host = GetNode<LineEdit>("Panel/VBoxContainer/Connect/Host");
 		_writeMode = GetNode<OptionButton>("Panel/VBoxContainer/Settings/Mode");
@@ -24,6 +26,20 @@ public class ClientUI : Control
 		_writeMode.SetItemMetadata(0, WebSocketPeer.WriteMode.Binary);
 		_writeMode.AddItem("TEXT");
 		_writeMode.SetItemMetadata(1, WebSocketPeer.WriteMode.Text);
+	}
+	private void _OnClientConnectionEstablished(string protocol)
+	{
+		var loginModal = GD.Load<PackedScene>("res://client/LoginModal.tscn").Instance() as LoginModal;
+		loginModal.Connect("LoginPayloadReady", this, "_OnLoginPayloadReady");
+		AddChild(loginModal);
+	}
+	private void _OnLoginPayloadReady(string securePayload)
+	{
+		_client.SendData(securePayload);
+	}
+	private void _OnClientWriteLine(string message)
+	{
+		_logDest.AddText($"{message}\n");
 	}
 	public void _OnModeItemSelected(int _id)
 	{
