@@ -8,6 +8,7 @@ public class LoginModal : Panel
     private LineEdit _username;
     private LineEdit _password;
     private Button _submit;
+    public string SecurePayload;
 
     public override void _Ready()
     {
@@ -28,9 +29,7 @@ public class LoginModal : Panel
         };
 
         var payloadJson = JSON.Print(payload);
-        var securePayload = new ApiPayloadSecurity().EncryptPayload(payloadJson);
-        EmitSignal(nameof(LoginPayloadReady), securePayload);
-
-        QueueFree();
+        SecurePayload = new ApiPayloadSecurity().EncryptPayload(payloadJson);
+        EmitSignal(nameof(LoginPayloadReady));
     }
 }

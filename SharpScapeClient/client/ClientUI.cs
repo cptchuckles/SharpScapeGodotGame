@@ -11,12 +11,13 @@ public class ClientUI : Control
 	public LineEdit _lineEdit;
 	public LineEdit _host;
 	public OptionButton _writeMode;
-	public override void _Ready()
+    private LoginModal _loginModal;
+
+    public override void _Ready()
 	{
 		_utils=GetNode<Utils>("/root/Utils");
 		_client = GetNode<Client>("/root/WebsocketClient");
 		_client.Connect("WriteLine", this, "_OnClientWriteLine");
-		_client.Websocket.Connect("connection_established", this, "_OnClientConnectionEstablished");
 		_logDest = GetNode<RichTextLabel>("Panel/VBoxContainer/MainOutput");
 		_lineEdit = GetNode<LineEdit>("Panel/VBoxContainer/Send/LineEdit");
 		_host = GetNode<LineEdit>("Panel/VBoxContainer/Connect/Host");
@@ -27,15 +28,23 @@ public class ClientUI : Control
 		_writeMode.AddItem("TEXT");
 		_writeMode.SetItemMetadata(1, WebSocketPeer.WriteMode.Text);
 	}
-	private void _OnClientConnectionEstablished(string protocol)
+	private void SpawnLoginModal()
 	{
-		var loginModal = GD.Load<PackedScene>("res://client/LoginModal.tscn").Instance() as LoginModal;
-		loginModal.Connect("LoginPayloadReady", this, "_OnLoginPayloadReady");
-		AddChild(loginModal);
+		_loginModal = GD.Load<PackedScene>("res://client/LoginModal.tscn").Instance() as LoginModal;
+		_loginModal.Connect("LoginPayloadReady", this, "_OnLoginPayloadReady");
+		AddChild(_loginModal);
 	}
-	private void _OnLoginPayloadReady(string securePayload)
+	private void _OnLoginPayloadReady()
 	{
-		_client.SendData(securePayload);
+		_utils._Log(_logDest, $"Connecting to host: {_host.Text}");
+		string[] supportedProtocols = {"my-protocol2", "my-protocol", "binary"};
+		_client.ConnectToUrl(_host.Text, supportedProtocols);
+		_client.Websocket.Connect("connection_established", this, "_OnWebsocketConnectionEstablished", flags: (uint)ConnectFlags.Oneshot);
+	}
+	private void _OnWebsocketConnectionEstablished(string protocol)
+	{
+		_client.SendData(_loginModal.SecurePayload);
+		_loginModal.QueueFree();
 	}
 	private void _OnClientWriteLine(string message)
 	{
@@ -61,9 +70,7 @@ public class ClientUI : Control
 		{
 			if(_host.Text != "")
 			{
-				_utils._Log(_logDest, $"Connecting to host: {_host.Text}");
-				string[] supportedProtocols = {"my-protocol2", "my-protocol", "binary"};
-				_client.ConnectToUrl(_host.Text, supportedProtocols);
+				SpawnLoginModal();
 			}
 		}
 		else
