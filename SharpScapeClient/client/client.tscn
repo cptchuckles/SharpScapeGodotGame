@@ -60,13 +60,13 @@ margin_right = 1024.0
 margin_bottom = 24.0
 text = "Send"
 
-[node name="RichTextLabel" type="RichTextLabel" parent="Panel/VBoxContainer"]
+[node name="MainOutput" type="RichTextLabel" parent="Panel/VBoxContainer"]
 margin_top = 80.0
 margin_right = 1024.0
 margin_bottom = 600.0
 size_flags_vertical = 3
 
-[node name="Client" type="Node" parent="."]
+[node name="WebsocketClient" type="Node" parent="."]
 script = ExtResource( 1 )
 
 [connection signal="toggled" from="Panel/VBoxContainer/Connect/Connect" to="." method="_OnConnectToggled"]

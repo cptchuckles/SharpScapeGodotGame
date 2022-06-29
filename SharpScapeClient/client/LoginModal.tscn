@@ -1,0 +1,80 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://client/LoginModal.cs" type="Script" id=1]
+
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 0.25098, 0.145098, 0.145098, 1 )
+
+[node name="LoginModal" type="Panel"]
+anchor_left = 0.236
+anchor_top = 0.29
+anchor_right = 0.775
+anchor_bottom = 0.29
+margin_left = 0.335983
+margin_top = -1.52588e-05
+margin_right = 0.399963
+margin_bottom = 244.0
+custom_styles/panel = SubResource( 1 )
+script = ExtResource( 1 )
+
+[node name="Label" type="Label" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+margin_left = -276.0
+margin_right = 276.0
+margin_bottom = 38.0
+text = "Login"
+align = 1
+valign = 1
+
+[node name="UsernameLabel" type="Label" parent="."]
+anchor_left = 0.17
+anchor_right = 0.5
+margin_left = 0.159996
+margin_top = 74.0
+margin_right = -116.0
+margin_bottom = 88.0
+text = "Username"
+
+[node name="Username" type="LineEdit" parent="."]
+anchor_left = 0.16
+anchor_right = 0.844
+margin_left = 81.68
+margin_top = 69.0
+margin_right = 0.111969
+margin_bottom = 93.0
+focus_neighbour_bottom = NodePath("../Password")
+focus_next = NodePath("../Password")
+
+[node name="PasswordLabel" type="Label" parent="."]
+anchor_left = 0.17
+anchor_right = 0.17
+margin_left = 0.159996
+margin_top = 102.0
+margin_right = 60.16
+margin_bottom = 116.0
+text = "Password"
+
+[node name="Password" type="LineEdit" parent="."]
+anchor_left = 0.163
+anchor_right = 0.846
+margin_left = 80.024
+margin_top = 97.0
+margin_right = 0.00799561
+margin_bottom = 121.0
+focus_neighbour_top = NodePath("../Username")
+focus_neighbour_bottom = NodePath("../LoginSubmit")
+focus_next = NodePath("../LoginSubmit")
+focus_previous = NodePath("../Username")
+secret = true
+
+[node name="LoginSubmit" type="Button" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+margin_left = -47.0
+margin_top = 159.0
+margin_right = 52.0
+margin_bottom = 197.0
+focus_neighbour_top = NodePath("../Password")
+focus_previous = NodePath("../Password")
+text = "Submit"
