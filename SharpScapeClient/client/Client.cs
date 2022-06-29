@@ -2,10 +2,12 @@ using System;
 using Godot;
 using Dictionary = Godot.Collections.Dictionary;
 using Array = Godot.Collections.Array;
+using System.Text;
 
 public class Client : Node
 {
     [Signal] delegate void WriteLine(string what);
+
     public WebSocketClient Websocket;
     private Utils _utils;
     private WebSocketPeer.WriteMode _writeMode;
@@ -25,7 +27,7 @@ public class Client : Node
         Websocket.Connect("server_close_request", this, nameof(_ClientCloseRequest));
         Websocket.Connect("data_received", this, nameof(_DataReceived));
         Websocket.Connect("connection_succeeded", this, nameof(_ClientConnected), new Array(){"multiplayer_protocol"});
-        Websocket.Connect("connection_failed", this, nameof(_ClientDisconnected));
+        Websocket.Connect("connection_failed", this, nameof(_ClientConnectionFailed));
     }
     public void _ConnectionError()
     {
@@ -57,11 +59,32 @@ public class Client : Node
     {  
         EmitSignal(nameof(WriteLine), $"Client just disconnected. Was clean: {clean.ToString()}");
     }
+    public void _ClientConnectionFailed()
+    {
+        EmitSignal(nameof(WriteLine), $"Client connection has failed");
+    }
     public void _DataReceived()
     {
         var packet = Websocket.GetPeer(1).GetPacket();
         var isString = Websocket.GetPeer(1).WasStringPacket();
-        EmitSignal(nameof(WriteLine), $"Received data. BINARY: {!isString}: {_utils.DecodeData(packet, isString)}");
+        EmitSignal(nameof(WriteLine), $"Received data. BINARY: {!isString}");
+        var packetText = (string) _utils.DecodeData(packet, isString);
+        var serverMessageDto = (Dictionary) JSON.Parse(packetText).Result;
+        switch(serverMessageDto["event"])
+        {
+        case "message":
+            EmitSignal(nameof(WriteLine), $"{serverMessageDto["clientId"]} said {serverMessageDto["data"]}");
+            break;
+        case "login":
+            EmitSignal(nameof(WriteLine), $"{serverMessageDto["clientId"]} logged in: {serverMessageDto["data"]}");
+            break;
+        case "logout":
+            EmitSignal(nameof(WriteLine), $"{serverMessageDto["clientId"]} logged out: {serverMessageDto["data"]}");
+            break;
+        default:
+            EmitSignal(nameof(WriteLine), $"Received event '{serverMessageDto["event"]}' with data: {serverMessageDto["data"]}");
+            break;
+        }
     }
     public Error ConnectToUrl(string host, string[] protocols)
     {

@@ -16,7 +16,7 @@ public class ClientUI : Control
     public override void _Ready()
 	{
 		_utils=GetNode<Utils>("/root/Utils");
-		_client = GetNode<Client>("/root/WebsocketClient");
+		_client = GetNode<Client>("WebsocketClient");
 		_client.Connect("WriteLine", this, "_OnClientWriteLine");
 		_logDest = GetNode<RichTextLabel>("Panel/VBoxContainer/MainOutput");
 		_lineEdit = GetNode<LineEdit>("Panel/VBoxContainer/Send/LineEdit");
@@ -43,7 +43,14 @@ public class ClientUI : Control
 	}
 	private void _OnWebsocketConnectionEstablished(string protocol)
 	{
-		_client.SendData(_loginModal.SecurePayload);
+		var wm = (WebSocketPeer.WriteMode)_writeMode.GetSelectedMetadata();
+		_client.SetWriteMode(WebSocketPeer.WriteMode.Text);
+		var loginPayload = new Godot.Collections.Dictionary() {
+			["event"] = "login",
+			["data"] = _loginModal.SecurePayload
+		};
+		_client.SendData(JSON.Print(loginPayload));
+		_client.SetWriteMode(wm);
 		_loginModal.QueueFree();
 	}
 	private void _OnClientWriteLine(string message)
@@ -61,7 +68,10 @@ public class ClientUI : Control
 			return;
 		}
 		_utils._Log(_logDest, $"Sending data {_lineEdit.Text}");
-		_client.SendData(_lineEdit.Text);
+		_client.SendData(JSON.Print(new Godot.Collections.Dictionary() {
+			["event"] = "message",
+			["data"] = _lineEdit.Text
+		}));
 		_lineEdit.Text = "";
 	}
 	public void _OnConnectToggled(bool pressed )
