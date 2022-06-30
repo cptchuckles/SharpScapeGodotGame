@@ -10,13 +10,13 @@ config_version=4
 
 [application]
 
-config/name="SharpScapeServer"
-run/main_scene="res://server/scenes/server.tscn"
+config/name="SharpScape"
+run/main_scene="res://development/development.tscn"
 config/icon="res://icon.png"
 
 [autoload]
 
-Utils="*res://globals/Utils.cs"
+Utils="*res://shared/Utils.cs"
 
 [physics]
 
