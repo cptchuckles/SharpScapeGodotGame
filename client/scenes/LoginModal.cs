@@ -1,9 +1,10 @@
 using Godot;
+using Newtonsoft.Json;
 using System;
 
 public class LoginModal : Panel
 {
-    [Signal] delegate void LoginPayloadReady(string securePayload);
+    [Signal] delegate void LoginPayloadReady();
 
     private LineEdit _username;
     private LineEdit _password;
@@ -23,13 +24,25 @@ public class LoginModal : Panel
 
     private void _OnLoginSubmitPressed()
     {
-        var payload = new Godot.Collections.Dictionary() {
-            ["Username"] = _username.Text,
-            ["Password"] = _password.Text
-        };
-
-        var payloadJson = JSON.Print(payload);
+        var payloadJson = new LoginPayload(_username.Text, _password.Text).ToString();
         SecurePayload = new ApiPayloadSecurity().EncryptPayload(payloadJson);
         EmitSignal(nameof(LoginPayloadReady));
+    }
+
+    internal class LoginPayload
+    {
+        public string Username { get; set; }
+        public string Password { get; set; }
+
+        public LoginPayload(string username, string password)
+        {
+            Username = username;
+            Password = password;
+        }
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
     }
 }

@@ -2,6 +2,8 @@ using System;
 using Godot;
 using ClientsById = System.Collections.Generic.Dictionary<int,Godot.WebSocketPeer>;
 using Array = Godot.Collections.Array;
+using SharpScape.Game.Dto;
+using Newtonsoft.Json;
 
 public class SharpScapeServer : Node
 {
@@ -77,38 +79,27 @@ public class SharpScapeServer : Node
         if (isString)
         {
             var payloadJson = System.Text.Encoding.UTF8.GetString(packet);
-            var payloadObject = (Godot.Collections.Dictionary) JSON.Parse(payloadJson).Result;
-            switch(payloadObject["event"])
+            var msgObject = MessageDto.FromJson(payloadJson);
+            switch(msgObject.Event)
             {
-            case "login":
+            case MessageEvent.Login:
                 var timestamp = OS.GetSystemTimeSecs();
-                var loginDto = JSON.Print(new Godot.Collections.Dictionary() {
-                    ["payload"] = payloadObject["data"],
-                    ["timestamp"] = timestamp.ToString(),
-                    ["signature"] = _crypto.Sign($"{payloadObject["data"]}.{timestamp.ToString()}")
-                });
-                SubmitLoginAttemptForClient(id, loginDto);
+                var loginDto = new ApiLoginDto() {
+                    Payload = msgObject.Data,
+                    Timestamp = (int)timestamp,
+                    Signature = _crypto.Sign($"{msgObject.Data}.{timestamp.ToString()}")
+                };
+                TryAuthenticateClient(id, loginDto.ToString());
                 break;
-            case "message":
-                SendData(JSON.Print(new Godot.Collections.Dictionary() {
-                    ["event"] = "message",
-                    ["clientId"] = id,
-                    ["data"] = payloadObject["data"]
-                }));
-                break;
+            case MessageEvent.Message:
             default:
-                var data = (string)_utils.DecodeData(packet,isString);
-                SendData(JSON.Print(new Godot.Collections.Dictionary() {
-                    ["event"] = "generic",
-                    ["clientId"] = id,
-                    ["data"] = data
-                }));
+                SendData(new MessageDto(msgObject.Event, msgObject.Data, id).ToString());
                 break;
             }
         }
     }
 
-    private void SubmitLoginAttemptForClient(int clientId, string loginDto)
+    private void TryAuthenticateClient(int clientId, string loginDto)
     {
         var http = new Http(clientId);
         http.Connect("ApiLoginSuccess", this, "_OnApiLoginSuccess");
@@ -119,12 +110,7 @@ public class SharpScapeServer : Node
 
     private void _OnApiLoginSuccess(int clientId, string responseBody)
     {
-        var payload = new Godot.Collections.Dictionary() {
-            ["event"] = "login",
-            ["clientId"] = clientId,
-            ["data"] = responseBody
-        };
-        SendData(JSON.Print(payload));
+        SendData(new MessageDto(MessageEvent.Login, responseBody, clientId).ToString());
     }
 
     private void _OnApiLoginFailure(int clientId)

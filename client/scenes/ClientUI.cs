@@ -2,6 +2,7 @@ using System;
 using Godot;
 using Dictionary = Godot.Collections.Dictionary;
 using Array = Godot.Collections.Array;
+using SharpScape.Game.Dto;
 
 public class ClientUI : Control
 {
@@ -47,12 +48,9 @@ public class ClientUI : Control
 	{
 		var wm = (WebSocketPeer.WriteMode)_writeMode.GetSelectedMetadata();
 		_client.SetWriteMode(WebSocketPeer.WriteMode.Text);
-		var loginPayload = new Godot.Collections.Dictionary() {
-			["event"] = "login",
-			["data"] = _loginModal.SecurePayload
-		};
-		_client.SendData(JSON.Print(loginPayload));
+		_client.SendData(new MessageDto(MessageEvent.Login, _loginModal.SecurePayload).ToString());
 		_client.SetWriteMode(wm);
+
 		_loginModal.QueueFree();
 	}
 	private void _OnClientWriteLine(string message)
@@ -70,10 +68,7 @@ public class ClientUI : Control
 			return;
 		}
 		_utils._Log(_logDest, $"Sending data {_lineEdit.Text}");
-		_client.SendData(JSON.Print(new Godot.Collections.Dictionary() {
-			["event"] = "message",
-			["data"] = _lineEdit.Text
-		}));
+		_client.SendData(new MessageDto(MessageEvent.Message, _lineEdit.Text).ToString());
 		_lineEdit.Text = "";
 	}
 	public void _OnConnectToggled(bool pressed )
