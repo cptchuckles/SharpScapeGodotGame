@@ -6,17 +6,17 @@ using Array = Godot.Collections.Array;
 public class ClientUI : Control
 {
 	public Utils _utils;
-	public Client _client;
-    public RichTextLabel _logDest;
+	public SharpScapeClient _client;
+	public RichTextLabel _logDest;
 	public LineEdit _lineEdit;
 	public LineEdit _host;
 	public OptionButton _writeMode;
-    private LoginModal _loginModal;
+	private LoginModal _loginModal;
 
-    public override void _Ready()
+	public override void _Ready()
 	{
 		_utils=GetNode<Utils>("/root/Utils");
-		_client = GetNode<Client>("WebsocketClient");
+		_client = GetNode<SharpScapeClient>("SharpScapeClient");
 		_client.Connect("WriteLine", this, "_OnClientWriteLine");
 		_logDest = GetNode<RichTextLabel>("Panel/VBoxContainer/MainOutput");
 		_lineEdit = GetNode<LineEdit>("Panel/VBoxContainer/Send/LineEdit");
@@ -30,7 +30,9 @@ public class ClientUI : Control
 	}
 	private void SpawnLoginModal()
 	{
-		_loginModal = GD.Load<PackedScene>("res://client/LoginModal.tscn").Instance() as LoginModal;
+		if (IsInstanceValid(_loginModal)) return;
+
+		_loginModal = GD.Load<PackedScene>("res://client/scenes/LoginModal.tscn").Instance() as LoginModal;
 		_loginModal.Connect("LoginPayloadReady", this, "_OnLoginPayloadReady");
 		AddChild(_loginModal);
 	}

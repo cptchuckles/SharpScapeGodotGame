@@ -6,10 +6,10 @@ public class MPServerCrypto
 {
     private Crypto _crypto = new Crypto();
     private CryptoKey _rsaPrivateKey = new CryptoKey();
-    
+
     public MPServerCrypto()
     {
-        _rsaPrivateKey.Load("res://.rsa/private.pem", false);
+        _rsaPrivateKey.Load("res://server/.rsa/private.pem", false);
     }
 
     public string Sign(string payload)
