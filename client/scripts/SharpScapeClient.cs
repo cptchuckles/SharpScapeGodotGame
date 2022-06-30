@@ -3,6 +3,8 @@ using Godot;
 using Dictionary = Godot.Collections.Dictionary;
 using Array = Godot.Collections.Array;
 using System.Text;
+using SharpScape.Game.Dto;
+using Newtonsoft.Json;
 
 public class SharpScapeClient : Node
 {
@@ -80,21 +82,21 @@ public class SharpScapeClient : Node
         EmitSignal(nameof(WriteLine), $"Received data. BINARY: {!isString}");
 
         var packetText = (string) _utils.DecodeData(packet, isString);
-        var serverMessageDto = (Dictionary) JSON.Parse(packetText).Result;
+        var serverMessageDto = MessageDto.FromJson(packetText);
 
-        switch(serverMessageDto["event"])
+        switch(serverMessageDto.Event)
         {
-        case "message":
-            EmitSignal(nameof(WriteLine), $"{serverMessageDto["clientId"]} said {serverMessageDto["data"]}");
+        case MessageEvent.Message:
+            EmitSignal(nameof(WriteLine), $"{serverMessageDto.ClientId} said {serverMessageDto.Data}");
             break;
-        case "login":
-            EmitSignal(nameof(WriteLine), $"{serverMessageDto["clientId"]} logged in: {serverMessageDto["data"]}");
+        case MessageEvent.Login:
+            EmitSignal(nameof(WriteLine), $"{serverMessageDto.ClientId} logged in: {serverMessageDto.Data}");
             break;
-        case "logout":
-            EmitSignal(nameof(WriteLine), $"{serverMessageDto["clientId"]} logged out: {serverMessageDto["data"]}");
+        case MessageEvent.Logout:
+            EmitSignal(nameof(WriteLine), $"{serverMessageDto.ClientId} logged out: {serverMessageDto.Data}");
             break;
         default:
-            EmitSignal(nameof(WriteLine), $"Received event '{serverMessageDto["event"]}' with data: {serverMessageDto["data"]}");
+            EmitSignal(nameof(WriteLine), $"Received event: {serverMessageDto.ToString()}");
             break;
         }
     }
