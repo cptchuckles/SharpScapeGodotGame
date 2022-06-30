@@ -3,16 +3,18 @@ using Godot;
 using ClientsById = System.Collections.Generic.Dictionary<int,Godot.WebSocketPeer>;
 using Array = Godot.Collections.Array;
 
-public class Server : Node
+public class SharpScapeServer : Node
 {
     public RichTextLabel _logDest;
+    public int lastConnectedClient;
+
     private Utils _utils;
     private WebSocketServer _server;
     private ClientsById _clients;
     private WebSocketPeer.WriteMode _writeMode;
-    public int lastConnectedClient;
     private MPServerCrypto _crypto = new MPServerCrypto();
-    public Server()
+
+    public SharpScapeServer()
     {
         _server = new WebSocketServer();
         _server.Connect("client_connected", this, nameof(_ClientConnected));
@@ -20,6 +22,7 @@ public class Server : Node
         _server.Connect("client_close_request", this, nameof(_ClientCloseRequest));
         _server.Connect("data_received", this, nameof(_ClientReceive));
     }
+
     public override void _Ready()
     {
         _logDest = GetParent().GetNode<RichTextLabel>("Panel/VBoxContainer/RichTextLabel");
@@ -28,11 +31,13 @@ public class Server : Node
         _writeMode = WebSocketPeer.WriteMode.Binary;
         lastConnectedClient = 0;
     }
+
     public override void _ExitTree()
     {
         _clients.Clear();
         _server.Stop();
     }
+
     public override void _Process(float _delta)
     {
         if(_server.IsListening())
@@ -40,11 +45,13 @@ public class Server : Node
             _server.Poll();
         }
     }
+
     public void _ClientCloseRequest(int id, string code, string reason)
     {
         GD.Print(reason == "Bye bye!");
         _utils._Log(_logDest, $"Client {id} close code: {code}, reason: {reason}");
     }
+
     public void _ClientConnected(int id, string protocol)
     {
         _clients.Add(id,_server.GetPeer(id));
@@ -52,6 +59,7 @@ public class Server : Node
         lastConnectedClient = id;
         _utils._Log(_logDest, $"Client {id} connected with protocol {protocol}");
     }
+
     public void _ClientDisconnected(int id, bool clean = true)
     {
         _utils._Log(_logDest, $"Client {id} disconnected. Was clean: {clean}");
@@ -60,6 +68,7 @@ public class Server : Node
             _clients.Remove(id);
         }
     }
+
     public void _ClientReceive(int id)
     {
         var packet = _server.GetPeer(id).GetPacket();
@@ -78,7 +87,6 @@ public class Server : Node
                     ["timestamp"] = timestamp.ToString(),
                     ["signature"] = _crypto.Sign($"{payloadObject["data"]}.{timestamp.ToString()}")
                 });
-                GD.Print(loginDto);
                 SubmitLoginAttemptForClient(id, loginDto);
                 break;
             case "message":
@@ -99,6 +107,7 @@ public class Server : Node
             }
         }
     }
+
     private void SubmitLoginAttemptForClient(int clientId, string loginDto)
     {
         var http = new Http(clientId);
@@ -107,6 +116,7 @@ public class Server : Node
         AddChild(http);
         http.Authenticate(loginDto);
     }
+
     private void _OnApiLoginSuccess(int clientId, string responseBody)
     {
         var payload = new Godot.Collections.Dictionary() {
@@ -116,10 +126,12 @@ public class Server : Node
         };
         SendData(JSON.Print(payload));
     }
+
     private void _OnApiLoginFailure(int clientId)
     {
         _server.DisconnectPeer(clientId, 1002, "Login attempt failed");
     }
+
     public void SendData(string data)
     {
         foreach(int id in _clients.Keys)
@@ -127,15 +139,18 @@ public class Server : Node
             _server.GetPeer(id).PutPacket(_utils.EncodeData(data, _writeMode));
         }
     }
+
     public Error Listen(int port, string[] supportedProtocols)
     {
         return _server.Listen(port, supportedProtocols);
     }
+
     public void Stop()
     {
         _clients.Clear();
         _server.Stop();
     }
+
     public void SetWriteMode(WebSocketPeer.WriteMode mode)
     {
         _writeMode = mode;

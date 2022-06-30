@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://client/Client.cs" type="Script" id=1]
-[ext_resource path="res://client/ClientUI.cs" type="Script" id=2]
+[ext_resource path="res://client/scripts/SharpScapeClient.cs" type="Script" id=1]
+[ext_resource path="res://client/scenes/ClientUI.cs" type="Script" id=2]
 
 [node name="Client" type="Control"]
 anchor_right = 1.0
@@ -66,7 +66,7 @@ margin_right = 1024.0
 margin_bottom = 600.0
 size_flags_vertical = 3
 
-[node name="WebsocketClient" type="Node" parent="."]
+[node name="SharpScapeClient" type="Node" parent="."]
 script = ExtResource( 1 )
 
 [connection signal="toggled" from="Panel/VBoxContainer/Connect/Connect" to="." method="_OnConnectToggled"]
