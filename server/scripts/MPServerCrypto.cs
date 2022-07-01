@@ -9,7 +9,15 @@ public class MPServerCrypto
 
     public MPServerCrypto()
     {
-        _rsaPrivateKey.Load("res://server/.rsa/private.pem", false);
+        var file = new File();
+        if (file.FileExists("./private.pem"))
+        {
+            _rsaPrivateKey.Load("./private.pem");
+        }
+        else
+        {
+            _rsaPrivateKey.Load("res://server/.rsa/private.pem", false);
+        }
     }
 
     public string Sign(string payload)
