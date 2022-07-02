@@ -39,7 +39,7 @@ public class ClientUI : Control
 	}
 	private void _OnLoginPayloadReady()
 	{
-		_utils._Log(_logDest, $"Connecting to host: {_host.Text}");
+		_utils.Log(_logDest, $"Connecting to host: {_host.Text}");
 		string[] supportedProtocols = {"my-protocol2", "my-protocol", "binary"};
 		_client.ConnectToUrl(_host.Text, supportedProtocols);
 		_client.Websocket.Connect("connection_established", this, "_OnWebsocketConnectionEstablished", flags: (uint)ConnectFlags.Oneshot);
@@ -67,7 +67,7 @@ public class ClientUI : Control
 		{
 			return;
 		}
-		_utils._Log(_logDest, $"Sending data {_lineEdit.Text}");
+		_utils.Log(_logDest, $"Sending data {_lineEdit.Text}");
 		_client.SendData(new MessageDto(MessageEvent.Message, _lineEdit.Text).ToString());
 		_lineEdit.Text = "";
 	}

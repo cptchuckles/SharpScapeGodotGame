@@ -1,7 +1,7 @@
 using Godot;
 using System.Text;
 
-public class Http : Node
+public class HttpAuthentication : Node
 {
     [Signal] delegate void ApiLoginSuccess(int clientId, string gameAvatarInfoDto);
     [Signal] delegate void ApiLoginFailure(int clientId);
@@ -10,7 +10,7 @@ public class Http : Node
 
     public int ClientId;
 
-    public Http(int clientId)
+    public HttpAuthentication(int clientId)
     {
         ClientId = clientId;
     }
@@ -23,7 +23,7 @@ public class Http : Node
 
     public void Authenticate(string payload)
     {
-        var err = _request.Request("https://localhost:7193/api/game/login",
+        var err = _request.Request($"https://{Utils.SharpScapeDomain}/api/game/login",
             customHeaders: new[] {"Content-Type: application/json"},
             sslValidateDomain: false,
             method: HTTPClient.Method.Post,

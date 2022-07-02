@@ -38,18 +38,18 @@ public class ServerUI : Control
             var port = (int)_port.Value;
             if(_server.Listen(port, supportedProtocols) == Error.Ok)
             {
-                _utils._Log(_logDest, $"Listing on port {port}");
+                _utils.Log(_logDest, $"Listing on port {port}");
             }
             else
             {
-                _utils._Log(_logDest, $"Error  listening on port {port}");
+                _utils.Log(_logDest, $"Error  listening on port {port}");
             }
         }
         else
         {
             _server.Stop();
             _writeMode.Disabled = false;
-            _utils._Log(_logDest, "SharpScapeServer stopped");
+            _utils.Log(_logDest, "SharpScapeServer stopped");
         }
     }
 
@@ -59,7 +59,7 @@ public class ServerUI : Control
         {
             return;
         }
-        _utils._Log(_logDest, $"Sending data {_lineEdit.Text}");
+        _utils.Log(_logDest, $"Sending data {_lineEdit.Text}");
         _server.SendData(_lineEdit.Text);
         _lineEdit.Text = "";
     }
