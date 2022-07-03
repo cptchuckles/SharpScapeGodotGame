@@ -1,20 +1,16 @@
-using System;
 using Godot;
 
-public class Utils : Node
+public class Utils
 {
-	public static string SharpScapeDomain = "localhost:7193";
-
-	public Utils()
+	public static string GetSharpScapeDomain()
 	{
 		var domain = OS.GetEnvironment("SHARPSCAPE_DOMAIN");
-		if (domain.Length > 0)
-			SharpScapeDomain = domain;
-
-        GD.Print($"SharpScape Domain is set to {SharpScapeDomain}");
+		return domain.Length > 0
+			? domain
+			: "localhost:7193";
 	}
 
-	public byte[] EncodeData(string data, WebSocketPeer.WriteMode mode)
+	public static byte[] EncodeData(string data, WebSocketPeer.WriteMode mode)
 	{
 		if(mode == WebSocketPeer.WriteMode.Text)
 		{
@@ -22,7 +18,8 @@ public class Utils : Node
 		}
 		return GD.Var2Bytes(data);
 	}
-	public object DecodeData(byte[] data, bool isString)
+
+	public static object DecodeData(byte[] data, bool isString)
 	{
 		if(isString)
 		{
@@ -30,9 +27,10 @@ public class Utils : Node
 		}
 		return GD.Bytes2Var(data);
 	}
-	public void Log(RichTextLabel node, string msg)
+
+	public static void Log(RichTextLabel printTarget, string msg)
 	{
 		GD.Print(msg);
-		node.AddText(GD.Str(msg) + "\n");
+		printTarget.AddText(GD.Str(msg) + "\n");
 	}
 }

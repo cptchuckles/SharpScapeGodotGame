@@ -1,12 +1,10 @@
 using Godot;
 using System.Text;
 
-public class HttpAuthentication : Node
+public class HttpAuthentication : HTTPRequest
 {
     [Signal] delegate void ApiLoginSuccess(int clientId, string gameAvatarInfoDto);
     [Signal] delegate void ApiLoginFailure(int clientId);
-
-    private HTTPRequest _request = new HTTPRequest();
 
     public int ClientId;
 
@@ -17,13 +15,12 @@ public class HttpAuthentication : Node
 
     public override void _Ready()
     {
-        AddChild(_request);
-        _request.Connect("request_completed", this, "_OnHttpRequestCompleted");
+        Connect("request_completed", this, "_OnHttpRequestCompleted");
     }
 
     public void Authenticate(string payload)
     {
-        var err = _request.Request($"https://{Utils.SharpScapeDomain}/api/game/login",
+        var err = Request($"https://{Utils.GetSharpScapeDomain()}/api/game/login",
             customHeaders: new[] {"Content-Type: application/json"},
             sslValidateDomain: false,
             method: HTTPClient.Method.Post,

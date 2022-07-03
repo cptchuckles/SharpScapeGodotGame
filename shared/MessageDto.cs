@@ -37,18 +37,25 @@ namespace SharpScape.Game.Dto
 
         // Json serialization stuff:
 
-        private static JsonSerializerSettings _settings = new JsonSerializerSettings() {
+        private static JsonSerializerSettings _jsonSettings = new JsonSerializerSettings() {
             DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate
         };
 
         public override string ToString()
         {
-            return JsonConvert.SerializeObject(this, _settings);
+            return JsonConvert.SerializeObject(this, _jsonSettings);
         }
 
         public static MessageDto FromJson(string json)
         {
-            return JsonConvert.DeserializeObject<MessageDto>(json, _settings);
+            try
+            {
+                return JsonConvert.DeserializeObject<MessageDto>(json, _jsonSettings);
+            }
+            catch (JsonSerializationException)
+            {
+                return null;
+            }
         }
     }
 }

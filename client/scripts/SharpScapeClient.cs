@@ -11,13 +11,11 @@ public class SharpScapeClient : Node
     [Signal] delegate void WriteLine(string what);
 
     public WebSocketClient Websocket;
-    private Utils _utils;
     private WebSocketPeer.WriteMode _writeMode;
     public int lastConnectedClient;
 
     public override void _Ready()
     {
-        _utils=GetNode<Utils>("/root/Utils");
         _writeMode = WebSocketPeer.WriteMode.Binary;
         lastConnectedClient = 0;
     }
@@ -81,8 +79,9 @@ public class SharpScapeClient : Node
 
         EmitSignal(nameof(WriteLine), $"Received data. BINARY: {!isString}");
 
-        var packetText = (string) _utils.DecodeData(packet, isString);
+        var packetText = (string) Utils.DecodeData(packet, isString);
         var serverMessageDto = MessageDto.FromJson(packetText);
+        if (serverMessageDto is null) return;
 
         switch(serverMessageDto.Event)
         {
@@ -114,7 +113,7 @@ public class SharpScapeClient : Node
     public void SendData(string data)
     {
         Websocket.GetPeer(1).SetWriteMode(_writeMode);
-        Websocket.GetPeer(1).PutPacket(_utils.EncodeData(data, _writeMode));
+        Websocket.GetPeer(1).PutPacket(Utils.EncodeData(data, _writeMode));
     }
 
     public void SetWriteMode(WebSocketPeer.WriteMode mode)
