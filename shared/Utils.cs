@@ -4,6 +4,18 @@ public class Utils
 {
 	public static string GetSharpScapeDomain()
 	{
+		if (OS.HasFeature("JavaScript"))
+		{	// this is an HTML5 export
+			var parentLocation = (string) JavaScript.Eval("window.parent.location.href");
+			var location = (string) JavaScript.Eval("window.location.href");
+			if (parentLocation != location)
+			{	// we are inside an <iframe>
+				return (string) JavaScript.Eval("window.parent.location.host");
+			}
+			else {
+				return "localhost:7193";
+			}
+		}
 		var domain = OS.GetEnvironment("SHARPSCAPE_DOMAIN");
 		return domain.Length > 0
 			? domain

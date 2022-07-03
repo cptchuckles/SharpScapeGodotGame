@@ -1,10 +1,12 @@
 using Godot;
 using Newtonsoft.Json;
-using System;
+using static SharpScape.NodeExtensions;
 
 public class LoginModal : Panel
 {
     [Signal] delegate void LoginPayloadReady();
+
+    private ApiPayloadSecurity _crypto;
 
     private LineEdit _username;
     private LineEdit _password;
@@ -20,12 +22,21 @@ public class LoginModal : Panel
 
         _submit = GetNode<Button>("LoginSubmit");
         _submit.Connect("pressed", this, "_OnLoginSubmitPressed");
+
+        _submit.Disabled = true;
+        var keyProvider = this.GetSingleton<ApiPublicKeyProvider>();
+        if (keyProvider.RequestResult == (int)HTTPRequest.Result.NoResponse)
+            // Enable the _submit button once keyProvider has retrieved the public key from the API
+            keyProvider.Connect("PublicKeyReady", _submit, "set", new Godot.Collections.Array { "disabled", false }, (uint)ConnectFlags.Oneshot);
+        else
+            _submit.Disabled = false;
+        _crypto = this.GetScoped<ApiPayloadSecurity>();
     }
 
     private void _OnLoginSubmitPressed()
     {
         var payloadJson = new LoginPayload(_username.Text, _password.Text).ToString();
-        SecurePayload = new ApiPayloadSecurity().EncryptPayload(payloadJson);
+        SecurePayload = _crypto.EncryptPayload(payloadJson);
         EmitSignal(nameof(LoginPayloadReady));
     }
 
