@@ -10,7 +10,6 @@ public class SharpScapeServer : Node
     public RichTextLabel _logDest;
     public int lastConnectedClient;
 
-    private Utils _utils;
     private WebSocketServer _server;
     private ClientsById _clients;
     private WebSocketPeer.WriteMode _writeMode;
@@ -28,7 +27,6 @@ public class SharpScapeServer : Node
     public override void _Ready()
     {
         _logDest = GetParent().GetNode<RichTextLabel>("Panel/VBoxContainer/RichTextLabel");
-        _utils=GetNode<Utils>("/root/Utils");
         _clients = new ClientsById(){};
         _writeMode = WebSocketPeer.WriteMode.Binary;
         lastConnectedClient = 0;
@@ -51,7 +49,7 @@ public class SharpScapeServer : Node
     public void _ClientCloseRequest(int id, string code, string reason)
     {
         GD.Print(reason == "Bye bye!");
-        _utils._Log(_logDest, $"Client {id} close code: {code}, reason: {reason}");
+        Utils.Log(_logDest, $"Client {id} close code: {code}, reason: {reason}");
     }
 
     public void _ClientConnected(int id, string protocol)
@@ -59,12 +57,12 @@ public class SharpScapeServer : Node
         _clients.Add(id,_server.GetPeer(id));
         _clients[id].SetWriteMode(_writeMode);
         lastConnectedClient = id;
-        _utils._Log(_logDest, $"Client {id} connected with protocol {protocol}");
+        Utils.Log(_logDest, $"Client {id} connected with protocol {protocol}");
     }
 
     public void _ClientDisconnected(int id, bool clean = true)
     {
-        _utils._Log(_logDest, $"Client {id} disconnected. Was clean: {clean}");
+        Utils.Log(_logDest, $"Client {id} disconnected. Was clean: {clean}");
         if(_clients.ContainsKey(id))
         {
             _clients.Remove(id);
@@ -75,11 +73,13 @@ public class SharpScapeServer : Node
     {
         var packet = _server.GetPeer(id).GetPacket();
         var isString = _server.GetPeer(id).WasStringPacket();
-        _utils._Log(_logDest, $"Data from {id} BINARY: {!isString}: {_utils.DecodeData(packet, isString)}");
+        Utils.Log(_logDest, $"Data from {id} BINARY: {!isString}: {Utils.DecodeData(packet, isString)}");
         if (isString)
         {
             var payloadJson = System.Text.Encoding.UTF8.GetString(packet);
             var msgObject = MessageDto.FromJson(payloadJson);
+            if (msgObject is null) return;
+
             switch(msgObject.Event)
             {
             case MessageEvent.Login:
@@ -101,7 +101,7 @@ public class SharpScapeServer : Node
 
     private void TryAuthenticateClient(int clientId, string loginDto)
     {
-        var http = new Http(clientId);
+        var http = new HttpAuthentication(clientId);
         http.Connect("ApiLoginSuccess", this, "_OnApiLoginSuccess");
         http.Connect("ApiLoginFailure", this, "_OnApiLoginFailure");
         AddChild(http);
@@ -122,7 +122,7 @@ public class SharpScapeServer : Node
     {
         foreach(int id in _clients.Keys)
         {
-            _server.GetPeer(id).PutPacket(_utils.EncodeData(data, _writeMode));
+            _server.GetPeer(id).PutPacket(Utils.EncodeData(data, _writeMode));
         }
     }
 

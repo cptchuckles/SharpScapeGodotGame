@@ -1,3 +1,4 @@
+using Godot;
 using System;
 using System.IO;
 using System.Text;
@@ -6,46 +7,39 @@ using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Encodings;
 
-public class ApiPayloadSecurity
+namespace SharpScape.Game.Services
 {
-    private RsaKeyParameters _apiPublicKey;
-
-    // TODO: load this from external file somehow.
-    // .NET and Godot file loading doesn't play nice with WASM export though
-    // so probably have to use fetch API, which probably means coupling the
-    // request path with the path it's gonna have in the SharpScape frontend.
-    private string _apiPublicKeyPem = @"-----BEGIN PUBLIC KEY-----
-MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA2zE9zZVGdQ2MplGLc43Y
-Tf1/SofwI5uqOsGMP6uvVTPZgxJEQMoxA9954VPss6OR1vpNj7GTSkZeWZhXt3rZ
-ruVVwgoQr0CUA1geMnMEmqeWHTRZa/JwzH/CHoacnzXYIzk96P/Mz7yZwgsYCCFZ
-aHyDwT4bxXpvzhMKmdGGpkIRNdRPEuUtAnMioQ5kO+P8BDUmxeledW1xg2TUotyg
-8uJ0NbsxSrcRKPlGm/n9yeeMN9Vgh9mBoO0Iflytsi8V28VK9pl+JM4cz/dqbjn+
-df/1acu0YalGo4ksnoZ77Olmzf8Y5QfjbGKeFnaGNVFEcHt35R5Cbj68Cv53vfCf
-DuYFewH63vyUlt+AejqPGh+5WvrWnEM7O2cAio/ZIGbqioOLxGHHtSQn9EO1E5Xo
-oOrOw6DT8hNexF5Ti4p3yzg785INzpheCAnydHyLx5Hh0hLX/4LwXfk0cpoPLZFD
-QYrW1ODx86iMS1U9xGd+HhVRYRp4rKB7qj4bZgwPkrQbmT00dJfi9Ar8278/h/fM
-+gOJ5G6mt9Klw/A9kByA0mt+XD7s07kX4sSVmetPHVRnVHP8Um4Yza94paQF5p7G
-ur55ic2lO6xmsVsz1pL79741SwwLLAfg0TlX7He2Rzz7D3IdbIPmS0BzIaDaVAVb
-c718MtMpIdkKSiGzwRKVTjMCAwEAAQ==
------END PUBLIC KEY-----";
-
-    public ApiPayloadSecurity()
+    public class ApiPayloadSecurity : ServiceNode
     {
-        using (var stringReader = new StringReader(_apiPublicKeyPem))
+        private RsaKeyParameters _apiPublicKey;
+
+        public override async void _Ready()
         {
-            var pemReader = new PemReader(stringReader);
-            _apiPublicKey = (RsaKeyParameters) pemReader.ReadObject();
+            var keyProvider = this.GetSingleton<ApiPublicKeyProvider>();
+            if (! keyProvider.IsKeyReady())
+            {
+                await ToSignal(keyProvider, "PublicKeyReady");
+            }
+
+            using (var stringReader = new StringReader(keyProvider.ApiPublicKey))
+            {
+                var pemReader = new PemReader(stringReader);
+                _apiPublicKey = (RsaKeyParameters) pemReader.ReadObject();
+            }
         }
-    }
 
-    public string EncryptPayload(string payload)
-    {
-        var engine = new Pkcs1Encoding(new RsaEngine());
-        engine.Init(forEncryption: true, _apiPublicKey);
+        public string EncryptPayload(string payload)
+        {
+            if (_apiPublicKey is null)
+                throw new MissingFieldException("API Public Key was not initialized");
 
-        var data = Encoding.UTF8.GetBytes(payload);
-        var encryptedData = engine.ProcessBlock(data, 0, data.Length);
+            var engine = new Pkcs1Encoding(new RsaEngine());
+            engine.Init(forEncryption: true, _apiPublicKey);
 
-        return Convert.ToBase64String(encryptedData);
+            var data = Encoding.UTF8.GetBytes(payload);
+            var encryptedData = engine.ProcessBlock(data, 0, data.Length);
+
+            return Convert.ToBase64String(encryptedData);
+        }
     }
 }

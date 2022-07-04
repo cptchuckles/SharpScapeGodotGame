@@ -1,9 +1,40 @@
-using System;
 using Godot;
 
-public class Utils : Node
+public class Utils
 {
-	public byte[] EncodeData(string data, WebSocketPeer.WriteMode mode)
+	public static string GetSharpScapeDomain()
+	{
+		if (OS.HasFeature("JavaScript"))
+		{	// this is an HTML5 export
+			var window = JavaScript.GetInterface("window");
+			var location = (JavaScriptObject) window.Get("location");
+			var parentWindow = (JavaScriptObject) window.Get("parent");
+			var parentLocation = (JavaScriptObject) parentWindow.Get("location");
+
+			var href = (string) location.Get("href");
+			var parentHref = (string) parentLocation.Get("href");
+
+			if (href != parentHref)
+			{	// we are inside an <iframe>
+				return (string) parentLocation.Get("host");
+			}
+			else if ((string) location.Get("hostname") == "localhost")
+			{	// this is a toplevel test of an HTML5 export, probably being served on a different port than SharpScape
+				return "localhost:7193";	// this only works if SharpScape's Api has Cors enabled
+			}
+			else
+			{	// this is a production toplevel HTML5 export
+				return (string) location.Get("host");
+			}
+		}
+
+		var domain = OS.GetEnvironment("SHARPSCAPE_DOMAIN");
+		return domain.Length > 0
+			? domain
+			: "localhost:7193";
+	}
+
+	public static byte[] EncodeData(string data, WebSocketPeer.WriteMode mode)
 	{
 		if(mode == WebSocketPeer.WriteMode.Text)
 		{
@@ -11,7 +42,8 @@ public class Utils : Node
 		}
 		return GD.Var2Bytes(data);
 	}
-	public object DecodeData(byte[] data, bool isString)
+
+	public static object DecodeData(byte[] data, bool isString)
 	{
 		if(isString)
 		{
@@ -19,9 +51,10 @@ public class Utils : Node
 		}
 		return GD.Bytes2Var(data);
 	}
-	public void _Log(RichTextLabel node, string msg)
+
+	public static void Log(RichTextLabel printTarget, string msg)
 	{
 		GD.Print(msg);
-		node.AddText(GD.Str(msg) + "\n");
+		printTarget.AddText(GD.Str(msg) + "\n");
 	}
 }
