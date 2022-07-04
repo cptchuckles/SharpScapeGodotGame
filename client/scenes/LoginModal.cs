@@ -1,6 +1,7 @@
 using Godot;
 using Newtonsoft.Json;
-using static SharpScape.NodeExtensions;
+using SharpScape.Game.Services;
+using static SharpScape.Game.NodeExtensions;
 
 public class LoginModal : Panel
 {

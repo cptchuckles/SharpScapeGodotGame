@@ -6,38 +6,40 @@ using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Encodings;
-using static SharpScape.NodeExtensions;
 
-public class ApiPayloadSecurity : Node
+namespace SharpScape.Game.Services
 {
-    private RsaKeyParameters _apiPublicKey;
-
-    public override async void _Ready()
+    public class ApiPayloadSecurity : ServiceNode
     {
-        var keyProvider = this.GetSingleton<ApiPublicKeyProvider>();
-        if (keyProvider.RequestResult == (int)HTTPRequest.Result.NoResponse)
+        private RsaKeyParameters _apiPublicKey;
+
+        public override async void _Ready()
         {
-            await ToSignal(keyProvider, "PublicKeyReady");
+            var keyProvider = this.GetSingleton<ApiPublicKeyProvider>();
+            if (keyProvider.RequestResult == (int)HTTPRequest.Result.NoResponse)
+            {
+                await ToSignal(keyProvider, "PublicKeyReady");
+            }
+
+            using (var stringReader = new StringReader(keyProvider.ApiPublicKey))
+            {
+                var pemReader = new PemReader(stringReader);
+                _apiPublicKey = (RsaKeyParameters) pemReader.ReadObject();
+            }
         }
 
-        using (var stringReader = new StringReader(keyProvider.ApiPublicKey))
+        public string EncryptPayload(string payload)
         {
-            var pemReader = new PemReader(stringReader);
-            _apiPublicKey = (RsaKeyParameters) pemReader.ReadObject();
+            if (_apiPublicKey is null)
+                throw new MissingFieldException("API Public Key was not initialized");
+
+            var engine = new Pkcs1Encoding(new RsaEngine());
+            engine.Init(forEncryption: true, _apiPublicKey);
+
+            var data = Encoding.UTF8.GetBytes(payload);
+            var encryptedData = engine.ProcessBlock(data, 0, data.Length);
+
+            return Convert.ToBase64String(encryptedData);
         }
-    }
-
-    public string EncryptPayload(string payload)
-    {
-        if (_apiPublicKey is null)
-            throw new MissingFieldException("API Public Key was not initialized");
-
-        var engine = new Pkcs1Encoding(new RsaEngine());
-        engine.Init(forEncryption: true, _apiPublicKey);
-
-        var data = Encoding.UTF8.GetBytes(payload);
-        var encryptedData = engine.ProcessBlock(data, 0, data.Length);
-
-        return Convert.ToBase64String(encryptedData);
     }
 }

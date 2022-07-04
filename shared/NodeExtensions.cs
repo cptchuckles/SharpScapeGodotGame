@@ -1,11 +1,12 @@
 using Godot;
 using System.Linq;
+using SharpScape.Game.Services;
 
-namespace SharpScape
+namespace SharpScape.Game
 {
     public static class NodeExtensions
     {
-        public static T GetSingleton<T>(this Node self) where T : Node, new()
+        public static T GetSingleton<T>(this Node self) where T : ServiceNode, new()
         {
             var singleton = self.GetTree().Root.GetChildren().OfType<T>().FirstOrDefault();
             if (singleton is null)
@@ -17,7 +18,7 @@ namespace SharpScape
             return singleton;
         }
 
-        public static T GetScoped<T>(this Node self) where T : Node, new()
+        public static T GetScoped<T>(this Node self) where T : ServiceNode, new()
         {
             var scoped = self.GetTree().CurrentScene.GetChildren().OfType<T>().FirstOrDefault();
             if (scoped is null)
