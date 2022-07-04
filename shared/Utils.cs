@@ -1,4 +1,6 @@
 using Godot;
+using Newtonsoft.Json;
+using SharpScape.Game.Dto;
 
 public class Utils
 {
@@ -56,5 +58,26 @@ public class Utils
 	{
 		GD.Print(msg);
 		printTarget.AddText(GD.Str(msg) + "\n");
+	}
+
+	private static JsonSerializerSettings _jsonSettings = new JsonSerializerSettings() {
+		DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate
+	};
+
+	public static string ToJson<T>(T obj) where T : JsonSerializable
+	{
+		return JsonConvert.SerializeObject(obj, _jsonSettings);
+	}
+
+	public static T FromJson<T>(string json) where T : JsonSerializable
+	{
+		try
+		{
+			return JsonConvert.DeserializeObject<T>(json, _jsonSettings);
+		}
+		catch (JsonSerializationException)
+		{
+			return null;
+		}
 	}
 }
