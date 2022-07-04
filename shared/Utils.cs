@@ -6,16 +6,28 @@ public class Utils
 	{
 		if (OS.HasFeature("JavaScript"))
 		{	// this is an HTML5 export
-			var parentLocation = (string) JavaScript.Eval("window.parent.location.href");
-			var location = (string) JavaScript.Eval("window.location.href");
-			if (parentLocation != location)
+			var window = JavaScript.GetInterface("window");
+			var location = (JavaScriptObject) window.Get("location");
+			var parentWindow = (JavaScriptObject) window.Get("parent");
+			var parentLocation = (JavaScriptObject) parentWindow.Get("location");
+
+			var href = (string) location.Get("href");
+			var parentHref = (string) parentLocation.Get("href");
+
+			if (href != parentHref)
 			{	// we are inside an <iframe>
-				return (string) JavaScript.Eval("window.parent.location.host");
+				return (string) parentLocation.Get("host");
 			}
-			else {
-				return "localhost:7193";
+			else if ((string) location.Get("hostname") == "localhost")
+			{	// this is a toplevel test of an HTML5 export, probably being served on a different port than SharpScape
+				return "localhost:7193";	// this only works if SharpScape's Api has Cors enabled
+			}
+			else
+			{	// this is a production toplevel HTML5 export
+				return (string) location.Get("host");
 			}
 		}
+
 		var domain = OS.GetEnvironment("SHARPSCAPE_DOMAIN");
 		return domain.Length > 0
 			? domain
