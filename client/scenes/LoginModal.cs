@@ -26,7 +26,7 @@ public class LoginModal : Panel
 
         _submit.Disabled = true;
         var keyProvider = this.GetSingleton<ApiPublicKeyProvider>();
-        if (keyProvider.RequestResult == (int)HTTPRequest.Result.NoResponse)
+        if (! keyProvider.IsKeyReady())
             // Enable the _submit button once keyProvider has retrieved the public key from the API
             keyProvider.Connect("PublicKeyReady", _submit, "set", new Godot.Collections.Array { "disabled", false }, (uint)ConnectFlags.Oneshot);
         else

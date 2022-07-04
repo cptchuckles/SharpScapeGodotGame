@@ -16,7 +16,7 @@ namespace SharpScape.Game.Services
         public override async void _Ready()
         {
             var keyProvider = this.GetSingleton<ApiPublicKeyProvider>();
-            if (keyProvider.RequestResult == (int)HTTPRequest.Result.NoResponse)
+            if (! keyProvider.IsKeyReady())
             {
                 await ToSignal(keyProvider, "PublicKeyReady");
             }

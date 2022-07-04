@@ -8,10 +8,15 @@ namespace SharpScape.Game.Services
         [Signal] delegate void PublicKeyReady();
 
         public string ApiPublicKey;
-        public int RequestResult = (int)HTTPRequest.Result.NoResponse;
-        public int ResponseCode = 0;
+        public HTTPRequest.Result RequestResult = HTTPRequest.Result.NoResponse;
+        public HTTPClient.ResponseCode ResponseCode = HTTPClient.ResponseCode.ImATeapot;
 
         private HTTPRequest _http = new HTTPRequest();
+
+        public bool IsKeyReady()
+        {
+            return RequestResult == HTTPRequest.Result.Success && ResponseCode == HTTPClient.ResponseCode.Ok;
+        }
 
         public override void _Ready()
         {
@@ -29,12 +34,15 @@ namespace SharpScape.Game.Services
 
         private void _OnHttpRequestCompleted(int result, int responseCode, string[] headers, byte[] body)
         {
-            if (result != (int)HTTPRequest.Result.Success)
+            RequestResult = (HTTPRequest.Result) result;
+            ResponseCode = (HTTPClient.ResponseCode) responseCode;
+
+            if (RequestResult != HTTPRequest.Result.Success)
             {
-                GD.Print($"Error fetching API public key: {result}");
+                GD.Print($"Error fetching API public key: Got result {result}");
             }
 
-            if (200 <= responseCode && responseCode < 300)
+            if (IsKeyReady())
             {
                 ApiPublicKey = Encoding.UTF8.GetString(body);
                 GD.Print("Got API public key successfully.");
@@ -45,8 +53,6 @@ namespace SharpScape.Game.Services
                 GD.Print($"Error fetching API public key: Server response {responseCode}");
             }
 
-            RequestResult = result;
-            ResponseCode = responseCode;
             _http.QueueFree();
         }
     }
