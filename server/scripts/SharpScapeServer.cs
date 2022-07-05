@@ -115,10 +115,10 @@ public class SharpScapeServer : Node
     private void _OnApiLoginSuccess(int clientId, string responseBody)
     {
         var playerInfo = Utils.FromJson<PlayerInfo>(responseBody);
-        if (_players.Values.Any(v => v.UserInfo.Id == playerInfo.UserInfo.Id))
+        int? loggedInPlayer = _players.Keys.FirstOrDefault(k => _players[k].UserInfo.Id == playerInfo.UserInfo.Id);
+        if (loggedInPlayer != null)
         {
-            _server.DisconnectPeer(clientId, 1011, "Duplicate login attempted");
-            return;
+            _server.DisconnectPeer((int)loggedInPlayer, 1011, "Killing duplicate login (ghost?)");
         }
         SendData(Utils.ToJson(new MessageDto(MessageEvent.Login, responseBody, clientId)));
         foreach (int id in _players.Keys)
