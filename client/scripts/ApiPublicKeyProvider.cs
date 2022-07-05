@@ -1,15 +1,23 @@
 using Godot;
+using SharpScape.Game.Dto;
+using System;
 using System.Text;
 
 namespace SharpScape.Game.Services
 {
-    public class ApiPublicKeyProvider : ServiceNode
+    public class ApiTransientKeyProvider : ServiceNode
     {
-        [Signal] delegate void PublicKeyReady();
+        public class ApiTransientKey : JsonSerializable
+        {
+            public Guid KeyId { get; set; }
+            public string X509Pub { get; set; }
+        }
 
-        public string ApiPublicKey;
+        [Signal] delegate void KeyReady();
+
         public HTTPRequest.Result RequestResult = HTTPRequest.Result.NoResponse;
         public HTTPClient.ResponseCode ResponseCode = HTTPClient.ResponseCode.ImATeapot;
+        public ApiTransientKey TransientKey;
 
         private HTTPRequest _http = new HTTPRequest();
 
@@ -23,7 +31,7 @@ namespace SharpScape.Game.Services
             AddChild(_http);
             _http.Connect("request_completed", this, "_OnHttpRequestCompleted");
 
-            var domain = $"https://{Utils.GetSharpScapeDomain()}/api/publickey";
+            var domain = $"https://{Utils.GetSharpScapeDomain()}/api/game/transientkey";
             GD.Print($"Fetching API public key from {domain}");
             var err = _http.Request(domain, sslValidateDomain: false);
             if (err != Error.Ok)
@@ -44,9 +52,10 @@ namespace SharpScape.Game.Services
 
             if (IsKeyReady())
             {
-                ApiPublicKey = Encoding.UTF8.GetString(body);
-                GD.Print("Got API public key successfully.");
-                EmitSignal(nameof(PublicKeyReady));
+                var json = Encoding.UTF8.GetString(body);
+                TransientKey = Utils.FromJson<ApiTransientKey>(json);
+                GD.Print("Got API transient key successfully.");
+                EmitSignal(nameof(KeyReady));
             }
             else
             {

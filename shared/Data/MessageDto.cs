@@ -6,13 +6,14 @@ namespace SharpScape.Game.Dto
 {
     public static class MessageEvent
     {
-        public const string Message = "Message";
-        public const string Movement = "Movement";
         public const string Login = "Login";
         public const string Logout = "Logout";
+        public const string ListPlayer = "ListPlayer";
+        public const string Message = "Message";
+        public const string Movement = "Movement";
     }
 
-    public class MessageDto
+    public class MessageDto : JsonSerializable
     {
         private string _event = MessageEvent.Message;
         public string Event
@@ -33,29 +34,6 @@ namespace SharpScape.Game.Dto
             Event = messageEvent;
             ClientId = clientId;
             Data = data;
-        }
-
-        // Json serialization stuff:
-
-        private static JsonSerializerSettings _jsonSettings = new JsonSerializerSettings() {
-            DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate
-        };
-
-        public override string ToString()
-        {
-            return JsonConvert.SerializeObject(this, _jsonSettings);
-        }
-
-        public static MessageDto FromJson(string json)
-        {
-            try
-            {
-                return JsonConvert.DeserializeObject<MessageDto>(json, _jsonSettings);
-            }
-            catch (JsonSerializationException)
-            {
-                return null;
-            }
         }
     }
 }

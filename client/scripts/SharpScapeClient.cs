@@ -1,10 +1,7 @@
-using System;
 using Godot;
-using Dictionary = Godot.Collections.Dictionary;
 using Array = Godot.Collections.Array;
-using System.Text;
 using SharpScape.Game.Dto;
-using Newtonsoft.Json;
+using PlayersById = System.Collections.Generic.Dictionary<int, SharpScape.Game.Dto.PlayerInfo>;
 
 public class SharpScapeClient : Node
 {
@@ -12,12 +9,12 @@ public class SharpScapeClient : Node
 
     public WebSocketClient Websocket;
     private WebSocketPeer.WriteMode _writeMode;
-    public int lastConnectedClient;
+
+    private PlayersById _players = new PlayersById();
 
     public override void _Ready()
     {
         _writeMode = WebSocketPeer.WriteMode.Binary;
-        lastConnectedClient = 0;
     }
 
     public SharpScapeClient()
@@ -80,23 +77,45 @@ public class SharpScapeClient : Node
         EmitSignal(nameof(WriteLine), $"Received data. BINARY: {!isString}");
 
         var packetText = (string) Utils.DecodeData(packet, isString);
-        var serverMessageDto = MessageDto.FromJson(packetText);
-        if (serverMessageDto is null) return;
+        var incoming = Utils.FromJson<MessageDto>(packetText);
+        if (incoming is null) return;
+        string who = _players.ContainsKey(incoming.ClientId)
+            ? _players[incoming.ClientId].UserInfo.Username
+            : incoming.ClientId.ToString();
 
-        switch(serverMessageDto.Event)
+        switch(incoming.Event)
         {
-        case MessageEvent.Message:
-            EmitSignal(nameof(WriteLine), $"{serverMessageDto.ClientId} said {serverMessageDto.Data}");
-            break;
-        case MessageEvent.Login:
-            EmitSignal(nameof(WriteLine), $"{serverMessageDto.ClientId} logged in: {serverMessageDto.Data}");
-            break;
-        case MessageEvent.Logout:
-            EmitSignal(nameof(WriteLine), $"{serverMessageDto.ClientId} logged out: {serverMessageDto.Data}");
-            break;
-        default:
-            EmitSignal(nameof(WriteLine), $"Received event: {serverMessageDto.ToString()}");
-            break;
+            case MessageEvent.Login:
+            {
+                var player = Utils.FromJson<PlayerInfo>(incoming.Data);
+                _players.Add(incoming.ClientId, player);
+                EmitSignal(nameof(WriteLine), $"* {player.UserInfo.Username} logged in ({incoming.ClientId})");
+                break;
+            }
+            case MessageEvent.ListPlayer:
+            {
+                if (_players.ContainsKey(incoming.ClientId))
+                    break;
+                var player = Utils.FromJson<PlayerInfo>(incoming.Data);
+                _players.Add(incoming.ClientId, player);
+                break;
+            }
+            case MessageEvent.Message:
+            {
+                EmitSignal(nameof(WriteLine), $"<{who}> {incoming.Data}");
+                break;
+            }
+            case MessageEvent.Logout:
+            {
+                EmitSignal(nameof(WriteLine), $"* {who} logged out ({incoming.Data})");
+                if (_players.ContainsKey(incoming.ClientId)) _players.Remove(incoming.ClientId);
+                break;
+            }
+            default:
+            {
+                EmitSignal(nameof(WriteLine), $"Received event: {Utils.ToJson(incoming)}");
+                break;
+            }
         }
     }
 

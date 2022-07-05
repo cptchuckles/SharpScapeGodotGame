@@ -43,7 +43,7 @@ public class ClientUI : Control
     {
         var wm = (WebSocketPeer.WriteMode)_writeMode.GetSelectedMetadata();
         _client.SetWriteMode(WebSocketPeer.WriteMode.Text);
-        _client.SendData(new MessageDto(MessageEvent.Login, _loginModal.SecurePayload).ToString());
+        _client.SendData(Utils.ToJson(new MessageDto(MessageEvent.Login, _loginModal.SecurePayload)));
         _client.SetWriteMode(wm);
 
         _loginModal.QueueFree();
@@ -63,7 +63,7 @@ public class ClientUI : Control
             return;
         }
         Utils.Log(_logDest, $"Sending data {_lineEdit.Text}");
-        _client.SendData(new MessageDto(MessageEvent.Message, _lineEdit.Text).ToString());
+        _client.SendData(Utils.ToJson(new MessageDto(MessageEvent.Message, _lineEdit.Text)));
         _lineEdit.Text = "";
     }
     public void _OnConnectToggled(bool pressed )

@@ -1,9 +1,8 @@
-using System;
+using System.Linq;
 using Godot;
-using ClientsById = System.Collections.Generic.Dictionary<int,Godot.WebSocketPeer>;
-using Array = Godot.Collections.Array;
 using SharpScape.Game.Dto;
-using Newtonsoft.Json;
+using ClientsById = System.Collections.Generic.Dictionary<int, Godot.WebSocketPeer>;
+using PlayersById = System.Collections.Generic.Dictionary<int, SharpScape.Game.Dto.PlayerInfo>;
 
 public class SharpScapeServer : Node
 {
@@ -11,7 +10,8 @@ public class SharpScapeServer : Node
     public int lastConnectedClient;
 
     private WebSocketServer _server;
-    private ClientsById _clients;
+    private ClientsById _clients = new ClientsById();
+    private PlayersById _players = new PlayersById();
     private WebSocketPeer.WriteMode _writeMode;
     private MPServerCrypto _crypto = new MPServerCrypto();
 
@@ -27,7 +27,6 @@ public class SharpScapeServer : Node
     public override void _Ready()
     {
         _logDest = GetParent().GetNode<RichTextLabel>("Panel/VBoxContainer/RichTextLabel");
-        _clients = new ClientsById(){};
         _writeMode = WebSocketPeer.WriteMode.Binary;
         lastConnectedClient = 0;
     }
@@ -35,6 +34,7 @@ public class SharpScapeServer : Node
     public override void _ExitTree()
     {
         _clients.Clear();
+        _players.Clear();
         _server.Stop();
     }
 
@@ -50,6 +50,7 @@ public class SharpScapeServer : Node
     {
         GD.Print(reason == "Bye bye!");
         Utils.Log(_logDest, $"Client {id} close code: {code}, reason: {reason}");
+        SendData(Utils.ToJson(new MessageDto(MessageEvent.Logout, reason, id)));
     }
 
     public void _ClientConnected(int id, string protocol)
@@ -64,9 +65,9 @@ public class SharpScapeServer : Node
     {
         Utils.Log(_logDest, $"Client {id} disconnected. Was clean: {clean}");
         if(_clients.ContainsKey(id))
-        {
             _clients.Remove(id);
-        }
+        if(_players.ContainsKey(id))
+            _players.Remove(id);
     }
 
     public void _ClientReceive(int id)
@@ -77,24 +78,29 @@ public class SharpScapeServer : Node
         if (isString)
         {
             var payloadJson = System.Text.Encoding.UTF8.GetString(packet);
-            var msgObject = MessageDto.FromJson(payloadJson);
+            var msgObject = Utils.FromJson<MessageDto>(payloadJson);
             if (msgObject is null) return;
 
             switch(msgObject.Event)
             {
-            case MessageEvent.Login:
-                var timestamp = OS.GetSystemTimeSecs();
-                var loginDto = new ApiLoginDto() {
-                    Payload = msgObject.Data,
-                    Timestamp = (int)timestamp,
-                    Signature = _crypto.Sign($"{msgObject.Data}.{timestamp.ToString()}")
-                };
-                TryAuthenticateClient(id, loginDto.ToString());
-                break;
-            case MessageEvent.Message:
-            default:
-                SendData(new MessageDto(msgObject.Event, msgObject.Data, id).ToString());
-                break;
+                case MessageEvent.Login:
+                {
+                    var uniqueSecret = Utils.FromJson<UniqueSecret>(msgObject.Data);
+                    var timestamp = OS.GetSystemTimeSecs();
+                    var loginDto = new ApiLoginDto() {
+                        KeyId = uniqueSecret.KeyId,
+                        Payload = uniqueSecret.Payload,
+                        Timestamp = (int)timestamp,
+                        Signature = _crypto.Sign($"{uniqueSecret.Payload}.{timestamp.ToString()}")
+                    };
+                    TryAuthenticateClient(id, Utils.ToJson(loginDto));
+                    break;
+                }
+                default:
+                {
+                    SendData(Utils.ToJson(new MessageDto(msgObject.Event, msgObject.Data, id)));
+                    break;
+                }
             }
         }
     }
@@ -110,7 +116,19 @@ public class SharpScapeServer : Node
 
     private void _OnApiLoginSuccess(int clientId, string responseBody)
     {
-        SendData(new MessageDto(MessageEvent.Login, responseBody, clientId).ToString());
+        var playerInfo = Utils.FromJson<PlayerInfo>(responseBody);
+        if (_players.Values.Any(v => v.UserInfo.Id == playerInfo.UserInfo.Id))
+        {
+            _server.DisconnectPeer(clientId, 1011, "Duplicate login attempted");
+            return;
+        }
+        SendData(Utils.ToJson(new MessageDto(MessageEvent.Login, responseBody, clientId)));
+        foreach (int id in _players.Keys)
+        {
+            var msg = Utils.ToJson(new MessageDto(MessageEvent.ListPlayer, Utils.ToJson<PlayerInfo>(_players[id]), id));
+            _server.GetPeer(clientId).PutPacket(Utils.EncodeData(msg, _writeMode));
+        }
+        _players.Add(clientId, playerInfo);
     }
 
     private void _OnApiLoginFailure(int clientId)
@@ -134,6 +152,7 @@ public class SharpScapeServer : Node
     public void Stop()
     {
         _clients.Clear();
+        _players.Clear();
         _server.Stop();
     }
 
