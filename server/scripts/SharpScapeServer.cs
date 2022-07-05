@@ -85,11 +85,13 @@ public class SharpScapeServer : Node
             {
                 case MessageEvent.Login:
                 {
+                    var uniqueSecret = Utils.FromJson<UniqueSecret>(msgObject.Data);
                     var timestamp = OS.GetSystemTimeSecs();
                     var loginDto = new ApiLoginDto() {
-                        Payload = msgObject.Data,
+                        KeyId = uniqueSecret.KeyId,
+                        Payload = uniqueSecret.Payload,
                         Timestamp = (int)timestamp,
-                        Signature = _crypto.Sign($"{msgObject.Data}.{timestamp.ToString()}")
+                        Signature = _crypto.Sign($"{uniqueSecret.Payload}.{timestamp.ToString()}")
                     };
                     TryAuthenticateClient(id, Utils.ToJson(loginDto));
                     break;

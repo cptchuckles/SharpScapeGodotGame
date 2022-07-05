@@ -29,5 +29,17 @@ namespace SharpScape.Game
             }
             return scoped;
         }
+        
+        public static T GetTransient<T>(this Node self) where T : ServiceNode, new()
+        {
+            var scoped = self.GetChildren().OfType<T>().FirstOrDefault();
+            if (scoped is null)
+            {
+                scoped = new T();
+                scoped.Name = scoped.GetType().ToString();
+                self.AddChild(scoped);
+            }
+            return scoped;
+        }
     }
 }
