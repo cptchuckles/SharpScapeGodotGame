@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Godot;
 using SharpScape.Game.Dto;
@@ -117,11 +118,15 @@ public class SharpScapeServer : Node
     private void _OnApiLoginSuccess(int clientId, string responseBody)
     {
         var playerInfo = Utils.FromJson<PlayerInfo>(responseBody);
-        if (_players.Values.Any(v => v.UserInfo.Id == playerInfo.UserInfo.Id))
+        try
         {
-            _server.DisconnectPeer(clientId, 1011, "Duplicate login attempted");
-            return;
+            int loggedInPlayer = _players.Keys.First(k => _players[k].UserInfo.Id == playerInfo.UserInfo.Id);
+            _server.DisconnectPeer(loggedInPlayer, 1011, "Killing duplicate login (ghost?)");
+            _clients.Remove(loggedInPlayer);
+            _players.Remove(loggedInPlayer);
         }
+        catch (InvalidOperationException) {} // Player wasn't already logged in, continue
+
         SendData(Utils.ToJson(new MessageDto(MessageEvent.Login, responseBody, clientId)));
         foreach (int id in _players.Keys)
         {
