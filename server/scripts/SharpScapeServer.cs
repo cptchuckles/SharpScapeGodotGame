@@ -19,6 +19,11 @@ public class SharpScapeServer : Node
     public SharpScapeServer()
     {
         _server = new WebSocketServer();
+        if (_crypto.SslCert != null)
+        {
+            _server.PrivateKey = _crypto.RsaKey;
+            _server.SslCertificate = _crypto.SslCert;
+        }
         _server.Connect("client_connected", this, nameof(_ClientConnected));
         _server.Connect("client_disconnected", this, nameof(_ClientDisconnected));
         _server.Connect("client_close_request", this, nameof(_ClientCloseRequest));
