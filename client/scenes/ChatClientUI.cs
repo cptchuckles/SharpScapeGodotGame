@@ -1,7 +1,7 @@
 using Godot;
 using SharpScape.Game.Dto;
 
-public class ClientUI : Control
+public class ChatClientUI : Control
 {
     public SharpScapeClient _client;
     public RichTextLabel _logDest;

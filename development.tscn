@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://server/scenes/server.tscn" type="PackedScene" id=1]
-[ext_resource path="res://client/scenes/ClientUI.tscn" type="PackedScene" id=2]
+[ext_resource path="res://client/scenes/ChatClientUI.tscn" type="PackedScene" id=2]
 
 [node name="Dev" type="HSplitContainer"]
 anchor_right = 1.0
