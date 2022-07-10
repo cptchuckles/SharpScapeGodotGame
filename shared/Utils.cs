@@ -2,10 +2,12 @@ using Godot;
 using Newtonsoft.Json;
 using SharpScape.Game.Dto;
 
-public class Utils
+public static class Utils
 {
-	public static string GetSharpScapeDomain()
+	public static string GetSharpScapeDomain(bool includeProto = false)
 	{
+		var proto = includeProto ? "https://" : string.Empty;
+
 		if (OS.HasFeature("JavaScript"))
 		{	// this is an HTML5 export
 			var window = JavaScript.GetInterface("window");
@@ -16,24 +18,30 @@ public class Utils
 			var href = (string) location.Get("href");
 			var parentHref = (string) parentLocation.Get("href");
 
+			proto = (string) location.Get("protocol");
+
 			if (href != parentHref)
 			{	// we are inside an <iframe>
+				if (includeProto) return $"{proto}//" + (string) parentLocation.Get("host");
 				return (string) parentLocation.Get("host");
 			}
 			else if ((string) location.Get("hostname") == "localhost")
 			{	// this is a toplevel test of an HTML5 export, probably being served on a different port than SharpScape
-				return "localhost:7193";	// this only works if SharpScape's Api has Cors enabled
+				if (includeProto) return "https://localhost:7193";
+				return "localhost:7193";
 			}
 			else
 			{	// this is a production toplevel HTML5 export
+				if (includeProto) return $"{proto}//" + (string) location.Get("host");
 				return (string) location.Get("host");
 			}
 		}
 
-		var domain = OS.GetEnvironment("SHARPSCAPE_DOMAIN");
-		return domain.Length > 0
-			? domain
+		var envDomain = OS.GetEnvironment("SHARPSCAPE_DOMAIN");
+		var domain = envDomain.Length > 0
+			? envDomain
 			: "localhost:7193";
+		return proto + domain;
 	}
 
 	public static byte[] EncodeData(string data, WebSocketPeer.WriteMode mode)
