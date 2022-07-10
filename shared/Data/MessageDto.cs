@@ -6,6 +6,7 @@ namespace SharpScape.Game.Dto
 {
     public static class MessageEvent
     {
+        public const string Identify = "Identify";
         public const string Login = "Login";
         public const string Logout = "Logout";
         public const string ListPlayer = "ListPlayer";

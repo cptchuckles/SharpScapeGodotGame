@@ -2,13 +2,17 @@ using Godot;
 using Array = Godot.Collections.Array;
 using SharpScape.Game.Dto;
 using PlayersById = System.Collections.Generic.Dictionary<int, SharpScape.Game.Dto.PlayerInfo>;
+using System;
 
 public class SharpScapeClient : Node
 {
     [Signal] delegate void WriteLine(string what);
+    [Signal] delegate void AuthenticationResult(bool success);
 
+    public int ClientId = -1;
     public WebSocketClient Websocket;
     private WebSocketPeer.WriteMode _writeMode;
+    private bool _tryingAuthenticate = false;
 
     private PlayersById _players = new PlayersById();
 
@@ -37,6 +41,11 @@ public class SharpScapeClient : Node
     public void _ClientCloseRequest(string code, string reason)
     {
         EmitSignal(nameof(WriteLine), $"Close code: {code}, reason: {reason}");
+        if (_tryingAuthenticate)
+        {
+            EmitSignal(nameof(AuthenticationResult), false);
+            _tryingAuthenticate = false;
+        }
     }
 
     public override void _ExitTree()
@@ -85,11 +94,21 @@ public class SharpScapeClient : Node
 
         switch(incoming.Event)
         {
+            case MessageEvent.Identify:
+            {
+                ClientId = Convert.ToInt32(incoming.Data);
+                break;
+            }
             case MessageEvent.Login:
             {
                 var player = Utils.FromJson<PlayerInfo>(incoming.Data);
                 _players.Add(incoming.ClientId, player);
                 EmitSignal(nameof(WriteLine), $"* {player.UserInfo.Username} logged in ({incoming.ClientId})");
+                if (_tryingAuthenticate && incoming.ClientId == ClientId)
+                {
+                    _tryingAuthenticate = false;
+                    EmitSignal(nameof(AuthenticationResult), true);
+                }
                 break;
             }
             case MessageEvent.ListPlayer:
@@ -133,6 +152,13 @@ public class SharpScapeClient : Node
     {
         Websocket.GetPeer(1).SetWriteMode(_writeMode);
         Websocket.GetPeer(1).PutPacket(Utils.EncodeData(data, _writeMode));
+    }
+
+    public void TryAuthenticate(string data)
+    {
+        _tryingAuthenticate = true;
+        _writeMode = WebSocketPeer.WriteMode.Text;
+        SendData(data);
     }
 
     public void SetWriteMode(WebSocketPeer.WriteMode mode)

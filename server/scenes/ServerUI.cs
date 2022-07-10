@@ -58,7 +58,7 @@ public class ServerUI : Control
             return;
         }
         Utils.Log(_logDest, $"Sending data {_lineEdit.Text}");
-        _server.SendData(_lineEdit.Text);
+        _server.Broadcast(_lineEdit.Text);
         _lineEdit.Text = "";
     }
 

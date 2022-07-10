@@ -13,7 +13,7 @@ namespace SharpScape.Game.Services
             public string X509Pub { get; set; }
         }
 
-        [Signal] delegate void KeyReady();
+        [Signal] delegate void KeyReady(bool success);
 
         public HTTPRequest.Result RequestResult = HTTPRequest.Result.NoResponse;
         public HTTPClient.ResponseCode ResponseCode = HTTPClient.ResponseCode.ImATeapot;
@@ -55,11 +55,12 @@ namespace SharpScape.Game.Services
                 var json = Encoding.UTF8.GetString(body);
                 TransientKey = Utils.FromJson<ApiTransientKey>(json);
                 GD.Print("Got API transient key successfully.");
-                EmitSignal(nameof(KeyReady));
+                EmitSignal(nameof(KeyReady), true);
             }
             else
             {
                 GD.Print($"Error fetching API public key: Server response {responseCode}");
+                EmitSignal(nameof(KeyReady), false);
             }
 
             _http.QueueFree();
