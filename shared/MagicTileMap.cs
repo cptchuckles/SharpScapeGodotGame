@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-public class TileMap : Godot.TileMap
+public class MagicTileMap : TileMap
 {
 
 	// Called when the node enters the scene tree for the first time.

@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://client/scripts/SharpScapeClient.cs" type="Script" id=1]
-[ext_resource path="res://client/scenes/ClientUI.cs" type="Script" id=2]
+[ext_resource path="res://client/scenes/ChatClientUI.cs" type="Script" id=2]
 
 [node name="Client" type="Control"]
 anchor_right = 1.0

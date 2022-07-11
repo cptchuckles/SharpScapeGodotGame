@@ -14,10 +14,15 @@ config/name="SharpScape"
 run/main_scene="res://main.tscn"
 config/icon="res://icon.png"
 
+[autoload]
+
+Utils="*res://shared/Utils.cs"
+
 [display]
 
-window/stretch/mode="2d"
-window/stretch/aspect="keep_height"
+window/size/width=1920
+window/size/height=1080
+window/stretch/aspect="expand"
 
 [physics]
 
