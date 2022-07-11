@@ -31,7 +31,7 @@ namespace SharpScape.Game.Services
             AddChild(_http);
             _http.Connect("request_completed", this, "_OnHttpRequestCompleted");
 
-            var domain = $"https://{Utils.GetSharpScapeDomain()}/api/game/transientkey";
+            var domain = $"{Utils.GetSharpScapeDomain(includeProto: true)}/api/game/transientkey";
             GD.Print($"Fetching API public key from {domain}");
             var err = _http.Request(domain, sslValidateDomain: false);
             if (err != Error.Ok)

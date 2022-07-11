@@ -5,18 +5,20 @@ using System.Text;
 public class MPServerCrypto
 {
     private Crypto _crypto = new Crypto();
-    private CryptoKey _rsaPrivateKey = new CryptoKey();
+    public CryptoKey RsaKey = new CryptoKey();
+    public X509Certificate SslCert;
 
     public MPServerCrypto()
     {
-        var file = new File();
-        if (file.FileExists("./private.pem"))
+        using (var fs = new File())
         {
-            _rsaPrivateKey.Load("./private.pem");
-        }
-        else
-        {
-            _rsaPrivateKey.Load("res://server/.rsa/private.pem", false);
+            var rsapath = fs.FileExists("./x509/sharpscape.key") ? "./x509/sharpscape.key" : "res://server/x509/sharpscape.key";
+            RsaKey.Load(rsapath);
+            if (fs.FileExists("./x509/sharpscape.crt"))
+            {
+                SslCert = new X509Certificate();
+                SslCert.Load("./x509/sharpscape.crt");
+            }
         }
     }
 
@@ -31,7 +33,7 @@ public class MPServerCrypto
             hashBytes = ctx.Finish();
         }
 
-        var signature = _crypto.Sign(HashingContext.HashType.Sha256, hashBytes, _rsaPrivateKey);
+        var signature = _crypto.Sign(HashingContext.HashType.Sha256, hashBytes, RsaKey);
         return Convert.ToBase64String(signature);
     }
 }
