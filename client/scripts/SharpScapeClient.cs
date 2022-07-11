@@ -4,8 +4,9 @@ using SharpScape.Game.Dto;
 using PlayersById = System.Collections.Generic.Dictionary<int, SharpScape.Game.Dto.PlayerInfo>;
 using System;
 using SharpScape.Game.Services;
+using System.Linq;
 
-public class SharpScapeClient : ServiceNode
+public class SharpScapeClient : NetworkServiceNode
 {
     [Signal] delegate void WriteLog(string msg);
     [Signal] delegate void AuthenticationResult(bool success);
@@ -97,9 +98,9 @@ public class SharpScapeClient : ServiceNode
         var packet = Websocket.GetPeer(1).GetPacket();
         var isString = Websocket.GetPeer(1).WasStringPacket();
 
-        EmitSignal(nameof(WriteLog), $"Received data. BINARY: {!isString}");
-
         var packetText = (string) Utils.DecodeData(packet, isString);
+        GD.Print($"Received data. BINARY: {!isString} DATA: {packetText}");
+
         var incoming = Utils.FromJson<MessageDto>(packetText);
         if (incoming is null) return;
         string who = _players.ContainsKey(incoming.ClientId)
@@ -130,8 +131,16 @@ public class SharpScapeClient : ServiceNode
             {
                 if (_players.ContainsKey(incoming.ClientId))
                     break;
-                var player = Utils.FromJson<PlayerInfo>(incoming.Data);
-                _players.Add(incoming.ClientId, player);
+                var playerInfo = Utils.FromJson<PlayerInfo>(incoming.Data);
+                _players.Add(incoming.ClientId, playerInfo);
+                if (GetTree().CurrentScene is World world)
+                {
+                    var alreadyHere = GetTree().GetNodesInGroup("Players").OfType<GameAvatar>().FirstOrDefault(p => p.UserId == playerInfo.UserInfo.Id);
+                    if (alreadyHere is null)
+                    {
+                        world.SpawnGameAvatar(incoming.Data);
+                    }
+                }
                 break;
             }
             case MessageEvent.Message:
@@ -193,12 +202,17 @@ public class SharpScapeClient : ServiceNode
         _writeMode = mode;
     }
 
-    private void _OnWorldLoad()
+    public override void _OnWorldLoadingComplete()
     {
         var world = GetTree().CurrentScene as World;
         if (world is null)
             throw new Exception("World is not world");
+
+        EmitSignal(nameof(WriteLog), "Client has entered the world");
+
         world.AddChild(GD.Load<PackedScene>("res://client/scenes/ClickInputHandler/ClickInputHandler.tscn").Instance() as ClickInputHandler);
+
+        EmitSignal(nameof(WriteLog), $"Client has {_players.Keys.Count} listings to show");
         foreach (var id in _players.Keys)
         {
             _players[id].Avatar = world.SpawnGameAvatar(Utils.ToJson(_players[id]));
@@ -207,9 +221,8 @@ public class SharpScapeClient : ServiceNode
         }
         Connect(nameof(PlayerLoginEvent), world, "SpawnGameAvatar");
         Connect(nameof(PlayerLogoutEvent), world, "DespawnGameAvatar");
-        world.Connect("AvatarSpawned", this, nameof(_OnWorldAvatarSpawned));
     }
-    private void _OnWorldAvatarSpawned(GameAvatar who)
+    public override void _OnWorldAvatarSpawned(GameAvatar who)
     {
         foreach (var key in _players.Keys)
         {

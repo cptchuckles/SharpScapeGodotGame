@@ -7,7 +7,7 @@ using ClientsById = System.Collections.Generic.Dictionary<int, Godot.WebSocketPe
 using PlayersById = System.Collections.Generic.Dictionary<int, SharpScape.Game.Dto.PlayerInfo>;
 using System.Text;
 
-public class SharpScapeServer : ServiceNode
+public class SharpScapeServer : NetworkServiceNode
 {
     [Signal] delegate void WriteLog(string msg);
     [Signal] delegate void PlayerLoginEvent(string playerInfo);
@@ -212,17 +212,18 @@ public class SharpScapeServer : ServiceNode
         }
     }
 
-    private void _OnWorldLoad()
+    public override void _OnWorldLoadingComplete()
     {
         var world = GetTree().CurrentScene as World;
         if (world is null)
             throw new Exception("World is not world");
 
+        EmitSignal(nameof(WriteLog), "Server has entered the world");
+
         Connect(nameof(PlayerLoginEvent), world, "SpawnGameAvatar");
         Connect(nameof(PlayerLogoutEvent), world, "DespawnGameAvatar");
-        world.Connect("AvatarSpawned", this, nameof(_OnWorldAvatarSpawned));
     }
-    private void _OnWorldAvatarSpawned(GameAvatar who)
+    public override void _OnWorldAvatarSpawned(GameAvatar who)
     {
         foreach (var key in _players.Keys)
         {

@@ -34,7 +34,6 @@ public class ServerStaging : Node
             throw new OperationCanceledException($"Error listening on port {_websocketPort}: {e}");
         }
 
-        GetTree().Connect("idle_frame", _server, "_OnWorldLoad", flags: (uint)ConnectFlags.Oneshot);
         GetTree().ChangeScene("res://shared/Scenes/World/World.tscn");
     }
 }

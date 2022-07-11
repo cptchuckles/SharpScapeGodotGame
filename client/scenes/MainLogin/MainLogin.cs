@@ -43,7 +43,6 @@ public class MainLogin : Control
     {
         if (success)
         {
-            GetTree().Connect("idle_frame", _client, "_OnWorldLoad", flags: (uint)ConnectFlags.Oneshot);
             GetTree().ChangeScene("res://shared/Scenes/World/World.tscn");
         }
         else

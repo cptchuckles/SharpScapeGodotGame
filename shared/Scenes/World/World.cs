@@ -1,17 +1,29 @@
 using Godot;
+using SharpScape.Game;
 using SharpScape.Game.Dto;
+using SharpScape.Game.Services;
 using System;
 using System.Linq;
 
 public class World : Node2D
 {
     [Signal] delegate void AvatarSpawned(GameAvatar who);
+    [Signal] delegate void WorldLoadingComplete();
 
     private PackedScene _avatarScene;
 
     public override void _Ready()
     {
         _avatarScene = GD.Load<PackedScene>("res://shared/Scenes/GameAvatar/GameAvatar.tscn");
+
+        var _networkService = this.GetSingleton<NetworkServiceNode>();
+        Connect(nameof(WorldLoadingComplete), _networkService, "_OnWorldLoadingComplete", flags: (uint)ConnectFlags.Oneshot);
+        Connect(nameof(AvatarSpawned), _networkService, "_OnWorldAvatarSpawned");
+
+        GetTree().Connect("idle_frame", this,
+            method: "emit_signal",
+            binds: new Godot.Collections.Array { nameof(WorldLoadingComplete) },
+            flags: (uint)ConnectFlags.Oneshot);
     }
 
     public GameAvatar SpawnGameAvatar(string playerInfo)
