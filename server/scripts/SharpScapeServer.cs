@@ -51,7 +51,7 @@ public class SharpScapeServer : Node
     {
         GD.Print(reason == "Bye bye!");
         Utils.Log(_logDest, $"Client {id} close code: {code}, reason: {reason}");
-        SendData(Utils.ToJson(new MessageDto(MessageEvent.Logout, reason, id)));
+        Broadcast(Utils.ToJson(new MessageDto(MessageEvent.Logout, reason, id)));
     }
 
     public void _ClientConnected(int id, string protocol)
@@ -60,6 +60,7 @@ public class SharpScapeServer : Node
         _clients[id].SetWriteMode(_writeMode);
         lastConnectedClient = id;
         Utils.Log(_logDest, $"Client {id} connected with protocol {protocol}");
+        SendData(id, Utils.ToJson(new MessageDto(MessageEvent.Identify, id.ToString())));
     }
 
     public void _ClientDisconnected(int id, bool clean = true)
@@ -97,7 +98,7 @@ public class SharpScapeServer : Node
                 }
                 default:
                 {
-                    SendData(Utils.ToJson(new MessageDto(msgObject.Event, msgObject.Data, id)));
+                    Broadcast(Utils.ToJson(new MessageDto(msgObject.Event, msgObject.Data, id)));
                     break;
                 }
             }
@@ -125,7 +126,7 @@ public class SharpScapeServer : Node
         }
         catch (InvalidOperationException) {} // Player wasn't already logged in, continue
 
-        SendData(Utils.ToJson(new MessageDto(MessageEvent.Login, responseBody, clientId)));
+        Broadcast(Utils.ToJson(new MessageDto(MessageEvent.Login, responseBody, clientId)));
         foreach (int id in _players.Keys)
         {
             var msg = Utils.ToJson(new MessageDto(MessageEvent.ListPlayer, Utils.ToJson<PlayerInfo>(_players[id]), id));
@@ -139,12 +140,16 @@ public class SharpScapeServer : Node
         _server.DisconnectPeer(clientId, 1002, "Login attempt failed");
     }
 
-    public void SendData(string data)
+    public void Broadcast(string data)
     {
         foreach(int id in _clients.Keys)
         {
-            _server.GetPeer(id).PutPacket(Utils.EncodeData(data, _writeMode));
+            SendData(id, data);
         }
+    }
+    public void SendData(int clientId, string data)
+    {
+        _server.GetPeer(clientId).PutPacket(Utils.EncodeData(data, _writeMode));
     }
 
     public Error Listen(int port, string[] supportedProtocols)
