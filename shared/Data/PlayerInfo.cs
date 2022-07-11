@@ -17,6 +17,6 @@ namespace SharpScape.Game.Dto
         public float GlobalPositionY { get; set; }
 
         [JsonIgnore]
-        public GameAvatar PlayerNode;
+        public GameAvatar Avatar;
     }
 }

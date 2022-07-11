@@ -32,7 +32,7 @@ public class ServerUI : Control
     {
         if(pressed)
         {
-            string[] supportedProtocols = {"my-protocol", "binary"};
+            string[] supportedProtocols = {"sharpScapeJson", "binary"};
             var port = (int)_port.Value;
             if(_server.Listen(port, supportedProtocols) == Error.Ok)
             {

@@ -4,12 +4,10 @@ using SharpScape.Game.Dto;
 using PlayersById = System.Collections.Generic.Dictionary<int, SharpScape.Game.Dto.PlayerInfo>;
 using System;
 using SharpScape.Game.Services;
-using System.Collections.Generic;
-using System.Linq;
 
 public class SharpScapeClient : ServiceNode
 {
-    [Signal] delegate void WriteLine(string what);
+    [Signal] delegate void WriteLog(string msg);
     [Signal] delegate void AuthenticationResult(bool success);
     [Signal] delegate void PlayerLoginEvent(string playerInfo);
     [Signal] delegate void PlayerLogoutEvent(string playerInfo);
@@ -19,7 +17,7 @@ public class SharpScapeClient : ServiceNode
     private WebSocketPeer.WriteMode _writeMode;
     private bool _tryingAuthenticate = false;
 
-    public PlayersById Players { get; private set; } = new PlayersById();
+    private PlayersById _players = new PlayersById();
 
     public override void _Ready()
     {
@@ -28,35 +26,39 @@ public class SharpScapeClient : ServiceNode
 
     public SharpScapeClient()
     {
-        Connect(nameof(WriteLine), this, "_OnWriteLine");
+        Connect(nameof(WriteLog), this, nameof(_OnWriteLog));
         Websocket = new WebSocketClient();
         Websocket.Connect("connection_established", this, nameof(_ClientConnected));
         Websocket.Connect("connection_error", this, nameof(_ConnectionError));
         Websocket.Connect("connection_closed", this, nameof(_ClientDisconnected));
-        Websocket.Connect("server_close_request", this, nameof(_ClientCloseRequest));
+        Websocket.Connect("server_close_request", this, nameof(_ServerCloseRequest));
         Websocket.Connect("data_received", this, nameof(_DataReceived));
         Websocket.Connect("connection_succeeded", this, nameof(_ClientConnected), new Array(){"multiplayer_protocol"});
         Websocket.Connect("connection_failed", this, nameof(_ClientConnectionFailed));
     }
 
-    private void _OnWriteLine(string msg)
+    private void _OnWriteLog(string msg)
     {
         GD.Print(msg);
     }
 
     public void _ConnectionError()
     {
-        EmitSignal(nameof(WriteLine), $"Failed to connect.");
+        EmitSignal(nameof(WriteLog), $"Failed to connect.");
     }
 
-    public void _ClientCloseRequest(string code, string reason)
+    public void _ServerCloseRequest(string code, string reason)
     {
         ClientId = -1;
-        EmitSignal(nameof(WriteLine), $"Close code: {code}, reason: {reason}");
+        EmitSignal(nameof(WriteLog), $"Close code: {code}, reason: {reason}");
         if (_tryingAuthenticate)
         {
             EmitSignal(nameof(AuthenticationResult), false);
             _tryingAuthenticate = false;
+        }
+        else
+        {
+            GetTree().ChangeScene("res://client/scenes/MainLogin/MainLogin.tscn");
         }
     }
 
@@ -76,18 +78,18 @@ public class SharpScapeClient : ServiceNode
 
     public void _ClientConnected(string protocol)
     {
-        EmitSignal(nameof(WriteLine), $"Client just connected with protocol: {protocol}");
+        EmitSignal(nameof(WriteLog), $"Client just connected with protocol: {protocol}");
         Websocket.GetPeer(1).SetWriteMode(_writeMode);
     }
 
     public void _ClientDisconnected(bool clean=true)
     {
-        EmitSignal(nameof(WriteLine), $"Client just disconnected. Was clean: {clean.ToString()}");
+        EmitSignal(nameof(WriteLog), $"Client just disconnected. Was clean: {clean.ToString()}");
     }
 
     public void _ClientConnectionFailed()
     {
-        EmitSignal(nameof(WriteLine), $"Client connection has failed");
+        EmitSignal(nameof(WriteLog), $"Client connection has failed");
     }
 
     public void _DataReceived()
@@ -95,13 +97,13 @@ public class SharpScapeClient : ServiceNode
         var packet = Websocket.GetPeer(1).GetPacket();
         var isString = Websocket.GetPeer(1).WasStringPacket();
 
-        EmitSignal(nameof(WriteLine), $"Received data. BINARY: {!isString}");
+        EmitSignal(nameof(WriteLog), $"Received data. BINARY: {!isString}");
 
         var packetText = (string) Utils.DecodeData(packet, isString);
         var incoming = Utils.FromJson<MessageDto>(packetText);
         if (incoming is null) return;
-        string who = Players.ContainsKey(incoming.ClientId)
-            ? Players[incoming.ClientId].UserInfo.Username
+        string who = _players.ContainsKey(incoming.ClientId)
+            ? _players[incoming.ClientId].UserInfo.Username
             : incoming.ClientId.ToString();
 
         switch(incoming.Event)
@@ -114,8 +116,8 @@ public class SharpScapeClient : ServiceNode
             case MessageEvent.Login:
             {
                 var player = Utils.FromJson<PlayerInfo>(incoming.Data);
-                Players.Add(incoming.ClientId, player);
-                EmitSignal(nameof(WriteLine), $"* {player.UserInfo.Username} logged in ({incoming.ClientId})");
+                _players.Add(incoming.ClientId, player);
+                EmitSignal(nameof(WriteLog), $"* {player.UserInfo.Username} logged in ({incoming.ClientId})");
                 if (_tryingAuthenticate && incoming.ClientId == ClientId)
                 {
                     _tryingAuthenticate = false;
@@ -126,22 +128,22 @@ public class SharpScapeClient : ServiceNode
             }
             case MessageEvent.ListPlayer:
             {
-                if (Players.ContainsKey(incoming.ClientId))
+                if (_players.ContainsKey(incoming.ClientId))
                     break;
                 var player = Utils.FromJson<PlayerInfo>(incoming.Data);
-                Players.Add(incoming.ClientId, player);
+                _players.Add(incoming.ClientId, player);
                 break;
             }
             case MessageEvent.Message:
             {
-                EmitSignal(nameof(WriteLine), $"<{who}> {incoming.Data}");
+                EmitSignal(nameof(WriteLog), $"<{who}> {incoming.Data}");
                 break;
             }
             case MessageEvent.Movement:
             {
                 var dest = (Vector2) GD.Bytes2Var(Convert.FromBase64String(incoming.Data));
                 GD.Print($"{who} is moving to {dest.ToString()}");
-                var player = Players[incoming.ClientId].PlayerNode;
+                var player = _players[incoming.ClientId].Avatar;
                 if (IsInstanceValid(player))
                 {
                     player.MoveTo(dest);
@@ -150,14 +152,14 @@ public class SharpScapeClient : ServiceNode
             }
             case MessageEvent.Logout:
             {
-                EmitSignal(nameof(WriteLine), $"* {who} logged out ({incoming.Data})");
+                EmitSignal(nameof(WriteLog), $"* {who} logged out");
                 EmitSignal(nameof(PlayerLogoutEvent), incoming.Data);
-                if (Players.ContainsKey(incoming.ClientId)) Players.Remove(incoming.ClientId);
+                if (_players.ContainsKey(incoming.ClientId)) _players.Remove(incoming.ClientId);
                 break;
             }
             default:
             {
-                EmitSignal(nameof(WriteLine), $"Received event: {Utils.ToJson(incoming)}");
+                EmitSignal(nameof(WriteLog), $"Received event: {Utils.ToJson(incoming)}");
                 break;
             }
         }
@@ -197,11 +199,11 @@ public class SharpScapeClient : ServiceNode
         if (world is null)
             throw new Exception("World is not world");
         world.AddChild(GD.Load<PackedScene>("res://client/scenes/ClickInputHandler/ClickInputHandler.tscn").Instance() as ClickInputHandler);
-        foreach (var id in Players.Keys)
+        foreach (var id in _players.Keys)
         {
-            Players[id].PlayerNode = world.SpawnGameAvatar(Utils.ToJson(Players[id]));
+            _players[id].Avatar = world.SpawnGameAvatar(Utils.ToJson(_players[id]));
             if (id == ClientId)
-                Players[id].PlayerNode.FocusMe();
+                _players[id].Avatar.FocusMe();
         }
         Connect(nameof(PlayerLoginEvent), world, "SpawnGameAvatar");
         Connect(nameof(PlayerLogoutEvent), world, "DespawnGameAvatar");
@@ -209,11 +211,11 @@ public class SharpScapeClient : ServiceNode
     }
     private void _OnWorldAvatarSpawned(GameAvatar who)
     {
-        foreach (var key in Players.Keys)
+        foreach (var key in _players.Keys)
         {
-            if (Players[key].UserInfo.Id == who.UserId)
+            if (_players[key].UserInfo.Id == who.UserId)
             {
-                Players[key].PlayerNode = who;
+                _players[key].Avatar = who;
                 return;
             }
         }

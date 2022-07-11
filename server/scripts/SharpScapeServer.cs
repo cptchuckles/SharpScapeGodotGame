@@ -1,19 +1,21 @@
+using Godot;
 using System;
 using System.Linq;
-using Godot;
 using SharpScape.Game.Dto;
+using SharpScape.Game.Services;
 using ClientsById = System.Collections.Generic.Dictionary<int, Godot.WebSocketPeer>;
 using PlayersById = System.Collections.Generic.Dictionary<int, SharpScape.Game.Dto.PlayerInfo>;
 
-public class SharpScapeServer : Node
+public class SharpScapeServer : ServiceNode
 {
-    public RichTextLabel _logDest;
-    public int lastConnectedClient;
+    [Signal] delegate void WriteLog(string msg);
+    [Signal] delegate void PlayerLoginEvent(string playerInfo);
+    [Signal] delegate void PlayerLogoutEvent(string playerInfo);
 
     private WebSocketServer _server;
     private ClientsById _clients = new ClientsById();
     private PlayersById _players = new PlayersById();
-    private WebSocketPeer.WriteMode _writeMode;
+    private WebSocketPeer.WriteMode _writeMode = WebSocketPeer.WriteMode.Text;
     private MPServerCrypto _crypto = new MPServerCrypto();
 
     public SharpScapeServer()
@@ -28,13 +30,12 @@ public class SharpScapeServer : Node
         _server.Connect("client_disconnected", this, nameof(_ClientDisconnected));
         _server.Connect("client_close_request", this, nameof(_ClientCloseRequest));
         _server.Connect("data_received", this, nameof(_ClientReceive));
+        Connect(nameof(WriteLog), this, nameof(_OnWriteLog));
     }
 
-    public override void _Ready()
+    private void _OnWriteLog(string msg)
     {
-        _logDest = GetParent().GetNode<RichTextLabel>("Panel/VBoxContainer/RichTextLabel");
-        _writeMode = WebSocketPeer.WriteMode.Binary;
-        lastConnectedClient = 0;
+        GD.Print(msg);
     }
 
     public override void _ExitTree()
@@ -54,8 +55,7 @@ public class SharpScapeServer : Node
 
     public void _ClientCloseRequest(int id, string code, string reason)
     {
-        GD.Print(reason == "Bye bye!");
-        Utils.Log(_logDest, $"Client {id} close code: {code}, reason: {reason}");
+        EmitSignal(nameof(WriteLog), $"Client {id} close code: {code}, reason: {reason}");
         Broadcast(Utils.ToJson(new MessageDto(MessageEvent.Logout, reason, id)));
     }
 
@@ -63,62 +63,80 @@ public class SharpScapeServer : Node
     {
         _clients.Add(id,_server.GetPeer(id));
         _clients[id].SetWriteMode(_writeMode);
-        lastConnectedClient = id;
-        Utils.Log(_logDest, $"Client {id} connected with protocol {protocol}");
+        EmitSignal(nameof(WriteLog), $"Client {id} connected with protocol {protocol}");
         SendData(id, Utils.ToJson(new MessageDto(MessageEvent.Identify, id.ToString())));
     }
 
     public void _ClientDisconnected(int id, bool clean = true)
     {
-        Utils.Log(_logDest, $"Client {id} disconnected. Was clean: {clean}");
+        EmitSignal(nameof(WriteLog), $"Client {id} disconnected. Was clean: {clean}");
+        
         if(_clients.ContainsKey(id))
             _clients.Remove(id);
+
         if(_players.ContainsKey(id))
+        {
+            var playerInfo = Utils.ToJson(_players[id]);
+            EmitSignal(nameof(PlayerLogoutEvent), playerInfo);
+            Broadcast(Utils.ToJson(new MessageDto(MessageEvent.Logout, playerInfo, id)));
             _players.Remove(id);
+        }
     }
 
     public void _ClientReceive(int id)
     {
         var packet = _server.GetPeer(id).GetPacket();
         var isString = _server.GetPeer(id).WasStringPacket();
-        Utils.Log(_logDest, $"Data from {id} BINARY: {!isString}: {Utils.DecodeData(packet, isString)}");
-        if (isString)
-        {
-            var payloadJson = System.Text.Encoding.UTF8.GetString(packet);
-            var msgObject = Utils.FromJson<MessageDto>(payloadJson);
-            if (msgObject is null) return;
+        var packetText = (string) Utils.DecodeData(packet, isString);
+        EmitSignal(nameof(WriteLog), $"Data from {id} BINARY: {!isString}: {packetText}");
+        
+        var incoming = Utils.FromJson<MessageDto>(packetText);
+        if (incoming is null) return;
+        string who = _players.ContainsKey(id)
+            ? _players[id].UserInfo.Username
+            : id.ToString();
 
-            switch(msgObject.Event)
+        switch(incoming.Event)
+        {
+            case MessageEvent.Login:
             {
-                case MessageEvent.Login:
+                var timestamp = OS.GetSystemTimeSecs();
+                var loginDto = new ApiLoginDto() {
+                    Payload = incoming.Data,
+                    Timestamp = (int)timestamp,
+                    Signature = _crypto.Sign($"{incoming.Data}.{timestamp.ToString()}")
+                };
+                TryAuthenticateClient(id, Utils.ToJson(loginDto));
+                return;
+            }
+            case MessageEvent.Message:
+            {
+                EmitSignal(nameof(WriteLog), $"<{who}> {incoming.Data}");
+                break;
+            }
+            case MessageEvent.Movement:
+            {
+                var dest = (Vector2) GD.Bytes2Var(Convert.FromBase64String(incoming.Data));
+                GD.Print($"{who} is moving to {dest.ToString()}");
+                var player = _players[id].Avatar;
+                if (IsInstanceValid(player))
                 {
-                    var timestamp = OS.GetSystemTimeSecs();
-                    var loginDto = new ApiLoginDto() {
-                        Payload = msgObject.Data,
-                        Timestamp = (int)timestamp,
-                        Signature = _crypto.Sign($"{msgObject.Data}.{timestamp.ToString()}")
-                    };
-                    TryAuthenticateClient(id, Utils.ToJson(loginDto));
-                    break;
+                    player.MoveTo(dest);
                 }
-                default:
-                {
-                    Broadcast(Utils.ToJson(new MessageDto(msgObject.Event, msgObject.Data, id)));
-                    break;
-                }
+                break;
             }
         }
+        Broadcast(Utils.ToJson(new MessageDto(incoming.Event, incoming.Data, id)));
     }
 
     private void TryAuthenticateClient(int clientId, string loginDto)
     {
         var http = new HttpAuthentication(clientId);
-        http.Connect("ApiLoginSuccess", this, "_OnApiLoginSuccess");
-        http.Connect("ApiLoginFailure", this, "_OnApiLoginFailure");
+        http.Connect("ApiLoginSuccess", this, nameof(_OnApiLoginSuccess));
+        http.Connect("ApiLoginFailure", this, nameof(_OnApiLoginFailure));
         AddChild(http);
         http.Authenticate(loginDto);
     }
-
     private void _OnApiLoginSuccess(int clientId, string responseBody)
     {
         var playerInfo = Utils.FromJson<PlayerInfo>(responseBody);
@@ -126,10 +144,11 @@ public class SharpScapeServer : Node
         {
             int loggedInPlayer = _players.Keys.First(k => _players[k].UserInfo.Id == playerInfo.UserInfo.Id);
             _server.DisconnectPeer(loggedInPlayer, 1011, "Killing duplicate login (ghost?)");
-            _clients.Remove(loggedInPlayer);
-            _players.Remove(loggedInPlayer);
         }
-        catch (InvalidOperationException) {} // Player wasn't already logged in, continue
+        catch (InvalidOperationException)
+        {
+            // Player wasn't already logged in, continue
+        }
 
         Broadcast(Utils.ToJson(new MessageDto(MessageEvent.Login, responseBody, clientId)));
         foreach (int id in _players.Keys)
@@ -138,8 +157,8 @@ public class SharpScapeServer : Node
             _server.GetPeer(clientId).PutPacket(Utils.EncodeData(msg, _writeMode));
         }
         _players.Add(clientId, playerInfo);
+        EmitSignal(nameof(PlayerLoginEvent), responseBody);
     }
-
     private void _OnApiLoginFailure(int clientId)
     {
         _server.DisconnectPeer(clientId, 1002, "Login attempt failed");
@@ -175,6 +194,28 @@ public class SharpScapeServer : Node
         foreach(int id in _clients.Keys)
         {
             _clients[id].SetWriteMode(_writeMode);
+        }
+    }
+
+    private void _OnWorldLoad()
+    {
+        var world = GetTree().CurrentScene as World;
+        if (world is null)
+            throw new Exception("World is not world");
+
+        Connect(nameof(PlayerLoginEvent), world, "SpawnGameAvatar");
+        Connect(nameof(PlayerLogoutEvent), world, "DespawnGameAvatar");
+        world.Connect("AvatarSpawned", this, nameof(_OnWorldAvatarSpawned));
+    }
+    private void _OnWorldAvatarSpawned(GameAvatar who)
+    {
+        foreach (var key in _players.Keys)
+        {
+            if (_players[key].UserInfo.Id == who.UserId)
+            {
+                _players[key].Avatar = who;
+                return;
+            }
         }
     }
 }
