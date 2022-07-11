@@ -5,6 +5,7 @@ using SharpScape.Game.Dto;
 using SharpScape.Game.Services;
 using ClientsById = System.Collections.Generic.Dictionary<int, Godot.WebSocketPeer>;
 using PlayersById = System.Collections.Generic.Dictionary<int, SharpScape.Game.Dto.PlayerInfo>;
+using System.Text;
 
 public class SharpScapeServer : ServiceNode
 {
@@ -79,6 +80,7 @@ public class SharpScapeServer : ServiceNode
             var playerInfo = Utils.ToJson(_players[id]);
             EmitSignal(nameof(PlayerLogoutEvent), playerInfo);
             Broadcast(Utils.ToJson(new MessageDto(MessageEvent.Logout, playerInfo, id)));
+            TrySavePlayerInfo(_players[id]);
             _players.Remove(id);
         }
     }
@@ -100,13 +102,7 @@ public class SharpScapeServer : ServiceNode
         {
             case MessageEvent.Login:
             {
-                var timestamp = OS.GetSystemTimeSecs();
-                var loginDto = new ApiLoginDto() {
-                    Payload = incoming.Data,
-                    Timestamp = (int)timestamp,
-                    Signature = _crypto.Sign($"{incoming.Data}.{timestamp.ToString()}")
-                };
-                TryAuthenticateClient(id, Utils.ToJson(loginDto));
+                TryAuthenticateClient(id, incoming.Data);
                 return;
             }
             case MessageEvent.Message:
@@ -129,13 +125,32 @@ public class SharpScapeServer : ServiceNode
         Broadcast(Utils.ToJson(new MessageDto(incoming.Event, incoming.Data, id)));
     }
 
-    private void TryAuthenticateClient(int clientId, string loginDto)
+    private MPServerMessageDto SignAndDate(string payload)
     {
-        var http = new HttpAuthentication(clientId);
+        var timestamp = OS.GetSystemTimeSecs();
+        return new MPServerMessageDto() {
+            Payload = payload,
+            Timestamp = (int)timestamp,
+            Signature = _crypto.Sign($"{payload}.{timestamp.ToString()}")
+        };
+    }
+    private void TrySavePlayerInfo(PlayerInfo playerInfo)
+    {
+        var playerSaveJson = Utils.ToJson(new PlayerSaveDto(playerInfo));
+        var playerSaveString = Convert.ToBase64String(Encoding.UTF8.GetBytes(playerSaveJson));
+        var message = SignAndDate(playerSaveString);
+        var saveRequest = new MPServerHttp();
+        AddChild(saveRequest);
+        saveRequest.SavePlayerInfo(message);
+    }
+    private void TryAuthenticateClient(int clientId, string payload)
+    {
+        var message = SignAndDate(payload);
+        var http = new MPServerHttp(clientId);
         http.Connect("ApiLoginSuccess", this, nameof(_OnApiLoginSuccess));
         http.Connect("ApiLoginFailure", this, nameof(_OnApiLoginFailure));
         AddChild(http);
-        http.Authenticate(loginDto);
+        http.Authenticate(message);
     }
     private void _OnApiLoginSuccess(int clientId, string responseBody)
     {
