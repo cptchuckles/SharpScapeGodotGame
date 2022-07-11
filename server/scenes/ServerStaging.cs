@@ -18,9 +18,9 @@ public class ServerStaging : Node
         {
             GD.Print($"WS_PORT not specified. Defaulting to {_websocketPort}");
         }
-        GetParent().Connect("ready", this, nameof(_OnParentReady));
+        GetTree().Connect("idle_frame", this, nameof(_DelayedReady), flags: (uint)ConnectFlags.Oneshot);
     }
-    private void _OnParentReady()
+    private void _DelayedReady()
     {
         string[] supportedProtocols = {"sharpScapeJson", "binary"};
         _server = this.GetSingleton<SharpScapeServer>();

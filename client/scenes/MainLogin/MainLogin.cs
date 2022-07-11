@@ -13,11 +13,11 @@ public class MainLogin : Control
 
     public override void _Ready()
     {
-        GetParent().Connect("ready", this, nameof(_OnParentReady));
+        GetTree().Connect("idle_frame", this, nameof(_DelayedReady), flags: (uint)ConnectFlags.Oneshot);
         _loginModal = GetNode<LoginModal>("LoginModal");
         _loginModal.Connect("LoginPayloadReady", this, nameof(_OnLoginPayloadReady));
     }
-    private void _OnParentReady()
+    private void _DelayedReady()
     {
         _client = this.GetSingleton<SharpScapeClient>();
         _client.Websocket.Connect("connection_established", this, nameof(_OnWebsocketConnectionEstablished), flags: (uint)ConnectFlags.Oneshot);
