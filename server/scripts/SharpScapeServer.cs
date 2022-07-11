@@ -214,8 +214,17 @@ public class SharpScapeServer : ServiceNode
             if (_players[key].UserInfo.Id == who.UserId)
             {
                 _players[key].Avatar = who;
+                who.Connect("UpdateGlobalPosition", this, nameof(_OnPlayerUpdatePosition), new Godot.Collections.Array {key});
                 return;
             }
+        }
+    }
+    private void _OnPlayerUpdatePosition(Vector2 globalPosition, int key)
+    {
+        if (_players.ContainsKey(key))
+        {
+            _players[key].GlobalPositionX = globalPosition.x;
+            _players[key].GlobalPositionY = globalPosition.y;
         }
     }
 }

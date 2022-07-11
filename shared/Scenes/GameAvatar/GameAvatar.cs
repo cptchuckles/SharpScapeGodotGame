@@ -5,8 +5,8 @@ public class GameAvatar : KinematicBody2D
 {
     public int UserId;
 
-    [Export]
-    private float _speed = 200.0f;
+    [Export] private float _speed = 200.0f;
+    [Signal] public delegate void UpdateGlobalPosition(Vector2 globalPosition);
 
     public Vector2 Destination;
     public bool InMotion { get; private set; }
@@ -46,5 +46,7 @@ public class GameAvatar : KinematicBody2D
         {
             InMotion = false;
         }
+
+        EmitSignal(nameof(UpdateGlobalPosition), GlobalPosition);
     }
 }
