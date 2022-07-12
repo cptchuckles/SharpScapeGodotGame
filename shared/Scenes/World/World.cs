@@ -1,9 +1,8 @@
 using Godot;
+using System.Linq;
 using SharpScape.Game;
 using SharpScape.Game.Dto;
 using SharpScape.Game.Services;
-using System;
-using System.Linq;
 
 public class World : Node2D
 {
