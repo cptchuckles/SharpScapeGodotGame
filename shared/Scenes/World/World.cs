@@ -39,6 +39,7 @@ public class World : Node2D
         avatar.UserId = player.UserInfo.Id;
         avatar.Username = player.UserInfo.Username;
         avatar.GlobalPosition = new Vector2(player.GlobalPositionX, player.GlobalPositionY);
+        avatar.SetAnimatedSpriteFrames(player.SpriteName);
 
         EmitSignal(nameof(AvatarSpawned), avatar);
         return avatar;
