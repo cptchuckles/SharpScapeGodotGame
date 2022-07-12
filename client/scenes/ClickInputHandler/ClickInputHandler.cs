@@ -32,5 +32,9 @@ public class ClickInputHandler : Node2D
             var moveRequest = new MessageDto(MessageEvent.Movement, Convert.ToBase64String(destData));
             _client.SendData(Utils.ToJson(moveRequest));
         }
+        else if (inputEvent.IsActionPressed("ui_cancel"))
+        {
+            AddChild(GD.Load<PackedScene>("res://client/scenes/ui/LogoutModal.tscn").Instance());
+        }
     }
 }

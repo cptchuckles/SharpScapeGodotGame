@@ -7,11 +7,11 @@
 [node name="World" type="YSort"]
 script = ExtResource( 3 )
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="WorldLayer" type="CanvasLayer" parent="."]
 layer = -5
 follow_viewport_enable = true
 
-[node name="TileMap" type="TileMap" parent="CanvasLayer"]
+[node name="TileMap" type="TileMap" parent="WorldLayer"]
 position = Vector2( -483, -545 )
 tile_set = ExtResource( 2 )
 cell_size = Vector2( 32, 32 )
