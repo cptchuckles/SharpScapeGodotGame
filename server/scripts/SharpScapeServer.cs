@@ -1,11 +1,11 @@
 using Godot;
 using System;
 using System.Linq;
+using System.Text;
 using SharpScape.Game.Dto;
 using SharpScape.Game.Services;
 using ClientsById = System.Collections.Generic.Dictionary<int, Godot.WebSocketPeer>;
 using PlayersById = System.Collections.Generic.Dictionary<int, SharpScape.Game.Dto.PlayerInfo>;
-using System.Text;
 
 public class SharpScapeServer : NetworkServiceNode
 {
@@ -158,6 +158,9 @@ public class SharpScapeServer : NetworkServiceNode
         try
         {
             int loggedInPlayer = _players.Keys.First(k => _players[k].UserInfo.Id == playerInfo.UserInfo.Id);
+            playerInfo = _players[loggedInPlayer];
+            responseBody = Utils.ToJson(playerInfo);
+            _players.Remove(loggedInPlayer);
             _server.DisconnectPeer(loggedInPlayer, 1011, "Killing duplicate login (ghost?)");
         }
         catch (InvalidOperationException)

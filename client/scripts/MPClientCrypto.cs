@@ -12,25 +12,32 @@ namespace SharpScape.Game.Services
 {
     public class MPClientCrypto : ServiceNode
     {
-        public ApiTransientKeyProvider KeyProvider;
+        private ApiTransientKeyProvider _keyProvider;
+        public ApiTransientKeyProvider KeyProvider
+        {
+            get
+            {
+                _keyProvider = this.GetTransient<ApiTransientKeyProvider>();
+                return _keyProvider;
+            }
+        }
 
         public override async void _Ready()
         {
-            KeyProvider = this.GetTransient<ApiTransientKeyProvider>();
             await ToSignal(KeyProvider, "KeyReady");
         }
 
         public string EncryptPayload(string payload)
         {
-            if (KeyProvider.TransientKey is null)
+            if (_keyProvider.TransientKey is null)
                 throw new MissingFieldException("API transient key was not initialized");
 
             var data = Encoding.UTF8.GetBytes(payload);
             AesEncrypt(data, out byte[] securePayload, out byte[] aesKey);
-            byte[] secureKey = RsaEncrypt(aesKey, KeyProvider.TransientKey.X509Pub);
+            byte[] secureKey = RsaEncrypt(aesKey, _keyProvider.TransientKey.X509Pub);
 
             var uniqueSecret = new UniqueSecret() {
-                KeyId = KeyProvider.TransientKey.KeyId,
+                KeyId = _keyProvider.TransientKey.KeyId,
                 SecureKey = Convert.ToBase64String(secureKey),
                 Payload = Convert.ToBase64String(securePayload)
             };

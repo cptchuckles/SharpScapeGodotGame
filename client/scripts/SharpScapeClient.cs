@@ -1,10 +1,10 @@
 using Godot;
-using Array = Godot.Collections.Array;
-using SharpScape.Game.Dto;
-using PlayersById = System.Collections.Generic.Dictionary<int, SharpScape.Game.Dto.PlayerInfo>;
 using System;
-using SharpScape.Game.Services;
 using System.Linq;
+using SharpScape.Game.Dto;
+using SharpScape.Game.Services;
+using Array = Godot.Collections.Array;
+using PlayersById = System.Collections.Generic.Dictionary<int, SharpScape.Game.Dto.PlayerInfo>;
 
 public class SharpScapeClient : NetworkServiceNode
 {
@@ -59,6 +59,7 @@ public class SharpScapeClient : NetworkServiceNode
         }
         else
         {
+            _players.Clear();
             GetTree().ChangeScene("res://client/scenes/MainLogin/MainLogin.tscn");
         }
     }
@@ -162,8 +163,11 @@ public class SharpScapeClient : NetworkServiceNode
             case MessageEvent.Logout:
             {
                 EmitSignal(nameof(WriteLog), $"* {who} logged out");
-                EmitSignal(nameof(PlayerLogoutEvent), incoming.Data);
-                if (_players.ContainsKey(incoming.ClientId)) _players.Remove(incoming.ClientId);
+                if (_players.ContainsKey(incoming.ClientId))
+                {
+                    EmitSignal(nameof(PlayerLogoutEvent), Utils.ToJson(_players[incoming.ClientId]));
+                    _players.Remove(incoming.ClientId);
+                }
                 break;
             }
             default:

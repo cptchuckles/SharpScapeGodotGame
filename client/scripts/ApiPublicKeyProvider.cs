@@ -61,6 +61,7 @@ namespace SharpScape.Game.Services
             {
                 GD.Print($"Error fetching API public key: Server response {responseCode}");
                 EmitSignal(nameof(KeyReady), false);
+                QueueFree();
             }
 
             _http.QueueFree();
