@@ -4,10 +4,14 @@
 [ext_resource path="res://shared/Resources/tileset.tres" type="TileSet" id=2]
 [ext_resource path="res://shared/Scenes/World/World.cs" type="Script" id=3]
 
-[node name="World" type="Node2D"]
+[node name="World" type="YSort"]
 script = ExtResource( 3 )
 
-[node name="TileMap" type="TileMap" parent="."]
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+layer = -5
+follow_viewport_enable = true
+
+[node name="TileMap" type="TileMap" parent="CanvasLayer"]
 position = Vector2( -483, -545 )
 tile_set = ExtResource( 2 )
 cell_size = Vector2( 32, 32 )

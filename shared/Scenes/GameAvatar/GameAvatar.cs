@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Linq;
 
 public class GameAvatar : KinematicBody2D
 {
@@ -11,6 +12,7 @@ public class GameAvatar : KinematicBody2D
     public Vector2 Destination;
     public bool InMotion { get; private set; }
 
+    private AnimatedSprite _characterSprite;
     private Label _username;
     public string Username
     {
@@ -27,6 +29,10 @@ public class GameAvatar : KinematicBody2D
     public void MoveTo(Vector2 destination)
     {
         Destination = destination;
+        if (! InMotion)
+        {
+            _characterSprite.Play("run");
+        }
         InMotion = true;
     }
 
@@ -41,12 +47,30 @@ public class GameAvatar : KinematicBody2D
 
         var movement = GlobalPosition.MoveToward(Destination, _speed * delta) - GlobalPosition;
         var result = MoveAndCollide(movement);
+        _characterSprite.FlipH = Vector2.Right.Dot(movement) < 0f;
 
-        if (result != null && result.Remainder.IsEqualApprox(Vector2.Zero))
+        if (Mathf.IsEqualApprox(GlobalPosition.DistanceTo(Destination), 0f))
         {
             InMotion = false;
+            _characterSprite.Play("idle");
         }
 
         EmitSignal(nameof(UpdateGlobalPosition), GlobalPosition);
+    }
+
+    public void SetAnimatedSpriteFrames(string spriteName)
+    {
+        var allSprites = GetNode("CharacterSprites").GetChildren().OfType<AnimatedSprite>();
+        foreach (var sprite in allSprites)
+        {
+            sprite.Hide();
+        }
+
+        _characterSprite =
+            allSprites.FirstOrDefault(s => s.Name.ToLower() == spriteName.ToLower())
+            ?? GetNode<AnimatedSprite>("CharacterSprites/Default");
+        
+        _characterSprite.Show();
+        _characterSprite.Play("idle");
     }
 }
