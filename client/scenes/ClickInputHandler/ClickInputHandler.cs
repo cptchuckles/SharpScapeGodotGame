@@ -10,6 +10,8 @@ public class ClickInputHandler : Node2D
     private Sprite _clickMarker;
     private SharpScapeClient _client;
 
+    private bool _modalOpen = false;
+
     public override void _Ready()
     {
         _clickMarker = GetNode<Sprite>("ClickMarker");
@@ -21,6 +23,8 @@ public class ClickInputHandler : Node2D
 
     public override void _UnhandledInput(InputEvent inputEvent)
     {
+        if (_modalOpen) return;
+
         if (inputEvent is InputEventMouseButton click && click.Pressed)
         {
             _destination = GetGlobalMousePosition();
@@ -31,6 +35,13 @@ public class ClickInputHandler : Node2D
             var destData = GD.Var2Bytes(_destination);
             var moveRequest = new MessageDto(MessageEvent.Movement, Convert.ToBase64String(destData));
             _client.SendData(Utils.ToJson(moveRequest));
+        }
+        else if (inputEvent.IsActionPressed("ui_cancel"))
+        {
+            var modal = GD.Load<PackedScene>("res://client/scenes/ui/LogoutModal.tscn").Instance();
+            modal.Connect("tree_exited", this, "set", new Godot.Collections.Array {"_modalOpen", false});
+            AddChild(modal);
+            _modalOpen = true;
         }
     }
 }
