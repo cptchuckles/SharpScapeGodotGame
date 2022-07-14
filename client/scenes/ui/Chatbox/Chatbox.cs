@@ -1,21 +1,26 @@
 using Godot;
+using SharpScape.Game;
+using SharpScape.Game.Dto;
 using System;
 
 public class Chatbox : PanelContainer
 {
     private ScrollContainer _messageRegion;
     private VBoxContainer _messageList;
-    private Label _username;
     private LineEdit _input;
     private Button _submitButton;
     private CheckBox _autoScroll;
     private CheckButton _showChat;
 
+    private SharpScapeClient _client;
+
     public override void _Ready()
     {
+        _client = this.GetSingleton<SharpScapeClient>();
+        _client.Connect("ChatMessageReceived", this, nameof(_OnChatMessageReceived));
+
         _messageRegion = GetNode<ScrollContainer>("MarginContainer/Interface/MessageRegion");
         _messageList = GetNode<VBoxContainer>("MarginContainer/Interface/MessageRegion/MessageList");
-        _username = GetNode<Label>("MarginContainer/Interface/UserControls/Username");
         _input = GetNode<LineEdit>("MarginContainer/Interface/UserControls/Input");
         _submitButton = GetNode<Button>("MarginContainer/Interface/UserControls/SubmitButton");
         _autoScroll = GetNode<CheckBox>("MarginContainer/Interface/UserControls/AutoScroll");
@@ -23,7 +28,7 @@ public class Chatbox : PanelContainer
         _showChat.Connect("toggled", this, nameof(_OnShowChatToggled));
 
         _input.GrabFocus();
-        _submitButton.Connect("pressed", this, nameof(AddChatMessage));
+        _submitButton.Connect("pressed", this, nameof(SendChatMessage));
     }
 
     private void _OnShowChatToggled(bool enabled)
@@ -42,21 +47,28 @@ public class Chatbox : PanelContainer
     {
         if (@event.IsActionPressed("ChatSendMessage"))
         {
-            AddChatMessage();
-            _input.GrabFocus();
+            SendChatMessage();
         }
     }
 
-    private void AddChatMessage()
+    private void SendChatMessage()
     {
         if (_input.Text.Length == 0)
             return;
 
-        var chatMessage = GD.Load<PackedScene>("res://client/scenes/ui/Chatbox/ChatMessage.tscn").Instance();
-        chatMessage.GetNode<Label>("Username").Text = _username.Text;
-        chatMessage.GetNode<Label>("Content").Text = _input.Text;
-        _messageList.AddChild(chatMessage);
+        var message = new MessageDto(MessageEvent.Message, _input.Text);
+        _client.SendData(Utils.ToJson(message));
+
         _input.Text = string.Empty;
+        _input.GrabFocus();
+    }
+
+    private void _OnChatMessageReceived(string username, string content)
+    {
+        var chatMessage = GD.Load<PackedScene>("res://client/scenes/ui/Chatbox/ChatMessage.tscn").Instance();
+        chatMessage.GetNode<Label>("Username").Text = $"<{username}>";
+        chatMessage.GetNode<Label>("Content").Text = content;
+        _messageList.AddChild(chatMessage);
 
         if (_autoScroll.Pressed)
         {

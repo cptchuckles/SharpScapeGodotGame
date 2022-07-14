@@ -15,7 +15,7 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_top = -300.0
-rect_min_size = Vector2( 800, 0 )
+rect_min_size = Vector2( 400, 0 )
 size_flags_vertical = 8
 script = ExtResource( 1 )
 
@@ -65,13 +65,13 @@ pressed = true
 [node name="Username" type="Label" parent="Chatbox/MarginContainer/Interface/UserControls"]
 margin_left = 80.0
 margin_top = 13.0
-margin_right = 154.0
+margin_right = 140.0
 margin_bottom = 27.0
-text = "Username: "
+text = "Message:"
 
 [node name="Input" type="LineEdit" parent="Chatbox/MarginContainer/Interface/UserControls"]
-margin_left = 158.0
-margin_right = 839.0
+margin_left = 144.0
+margin_right = 838.0
 margin_bottom = 40.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -80,7 +80,7 @@ caret_blink = true
 caret_blink_speed = 0.5
 
 [node name="SubmitButton" type="Button" parent="Chatbox/MarginContainer/Interface/UserControls"]
-margin_left = 843.0
+margin_left = 842.0
 margin_right = 904.0
 margin_bottom = 40.0
 size_flags_horizontal = 3
