@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://shared/Scenes/GameAvatar/Sprites/default.tres" type="SpriteFrames" id=1]
 [ext_resource path="res://shared/Scenes/GameAvatar/GameAvatar.cs" type="Script" id=2]
@@ -33,18 +33,19 @@ position = Vector2( 0, -28 )
 scale = Vector2( 2, 2 )
 frames = ExtResource( 1 )
 animation = "idle"
-frame = 4
 playing = true
 
-[node name="Kit_CatAvatar" type="AnimatedSprite" parent="CharacterSprites"]
+[node name="KitCat" type="AnimatedSprite" parent="CharacterSprites"]
+visible = false
 position = Vector2( 6, -46 )
 scale = Vector2( 2, 2 )
 frames = ExtResource( 3 )
 animation = "run"
-frame = 1
+frame = 4
 playing = true
 
 [node name="Rat" type="AnimatedSprite" parent="CharacterSprites"]
+visible = false
 position = Vector2( 7, -57 )
 scale = Vector2( 3.65625, 3.65625 )
 frames = ExtResource( 4 )
