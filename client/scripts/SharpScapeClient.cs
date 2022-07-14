@@ -214,7 +214,8 @@ public class SharpScapeClient : NetworkServiceNode
 
         EmitSignal(nameof(WriteLog), "Client has entered the world");
 
-        world.AddChild(GD.Load<PackedScene>("res://client/scenes/ClickInputHandler/ClickInputHandler.tscn").Instance() as ClickInputHandler);
+        world.AddChild(GD.Load<PackedScene>("res://client/scenes/ui/ClickInputHandler/ClickInputHandler.tscn").Instance() as ClickInputHandler);
+        world.AddChild(GD.Load<PackedScene>("res://client/scenes/ui/Chatbox/Chatbox.tscn").Instance() as Chatbox);
 
         EmitSignal(nameof(WriteLog), $"Client has {_players.Keys.Count} listings to show");
         foreach (var id in _players.Keys)

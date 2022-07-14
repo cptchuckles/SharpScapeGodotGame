@@ -1,0 +1,21 @@
+[gd_scene format=2]
+
+[node name="ChatMessage" type="HBoxContainer"]
+margin_right = 1125.0
+margin_bottom = 31.0
+
+[node name="Username" type="Label" parent="."]
+margin_right = 82.0
+margin_bottom = 14.0
+size_flags_vertical = 0
+custom_colors/font_color = Color( 0.270588, 0.690196, 1, 1 )
+text = "<Username>"
+
+[node name="Content" type="Label" parent="."]
+margin_left = 86.0
+margin_right = 1125.0
+margin_bottom = 31.0
+size_flags_horizontal = 3
+size_flags_vertical = 1
+text = "He will ride across land and time to find a way through this endless night. There's a storm in his heart, and a fire burns his soul, but the Wanderer's part is to ride alone"
+autowrap = true

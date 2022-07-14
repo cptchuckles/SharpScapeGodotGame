@@ -24,6 +24,18 @@ window/size/width=1920
 window/size/height=1080
 window/stretch/aspect="expand"
 
+[input]
+
+ChatSendMessage={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":16777221,"physical_scancode":0,"unicode":0,"echo":false,"script":null)
+ ]
+}
+
+[logging]
+
+file_logging/enable_file_logging=true
+
 [physics]
 
 common/enable_pause_aware_picking=true
