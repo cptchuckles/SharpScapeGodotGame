@@ -3,6 +3,7 @@
 [ext_resource path="res://shared/Scenes/GameAvatar/Sprites/default.tres" type="SpriteFrames" id=1]
 [ext_resource path="res://shared/Scenes/GameAvatar/GameAvatar.cs" type="Script" id=2]
 [ext_resource path="res://shared/Scenes/GameAvatar/Sprites/Kit_Cat.tres" type="SpriteFrames" id=3]
+[ext_resource path="res://shared/Scenes/GameAvatar/Sprites/rat.tres" type="SpriteFrames" id=4]
 
 [sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 19, 8 )
@@ -40,5 +41,13 @@ position = Vector2( 6, -46 )
 scale = Vector2( 2, 2 )
 frames = ExtResource( 3 )
 animation = "run"
+frame = 1
+playing = true
+
+[node name="Rat" type="AnimatedSprite" parent="CharacterSprites"]
+position = Vector2( 7, -57 )
+scale = Vector2( 3.65625, 3.65625 )
+frames = ExtResource( 4 )
+animation = "idle"
 frame = 1
 playing = true
