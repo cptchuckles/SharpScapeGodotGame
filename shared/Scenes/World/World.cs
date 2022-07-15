@@ -13,6 +13,8 @@ public class World : Node2D
 
     public override void _Ready()
     {
+        GD.Randomize();
+
         _avatarScene = GD.Load<PackedScene>("res://shared/Scenes/GameAvatar/GameAvatar.tscn");
 
         var _networkService = this.GetSingleton<NetworkServiceNode>();
