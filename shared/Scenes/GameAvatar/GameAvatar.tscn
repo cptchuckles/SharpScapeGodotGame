@@ -16,7 +16,7 @@ position = Vector2( 0, -4 )
 shape = SubResource( 1 )
 
 [node name="PlayerCamera" type="Camera2D" parent="."]
-position = Vector2( 0, -28 )
+position = Vector2( 0, 47 )
 
 [node name="Username" type="Label" parent="."]
 margin_left = -120.0
