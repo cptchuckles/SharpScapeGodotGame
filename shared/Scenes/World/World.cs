@@ -25,6 +25,11 @@ public class World : Node2D
             flags: (uint)ConnectFlags.Oneshot);
     }
 
+    public override void _ExitTree()
+    {
+        this.GetSingleton<NetworkServiceNode>().QueueFree();
+    }
+
     public GameAvatar SpawnGameAvatar(string playerInfo)
     {
         var player = Utils.FromJson<PlayerInfo>(playerInfo);
