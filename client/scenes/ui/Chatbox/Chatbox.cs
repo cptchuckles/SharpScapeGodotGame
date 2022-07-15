@@ -1,10 +1,18 @@
 using Godot;
+using System.Linq;
 using SharpScape.Game;
 using SharpScape.Game.Dto;
 using UsernameColors = System.Collections.Generic.Dictionary<string, Godot.Color>;
 
 public class Chatbox : PanelContainer
 {
+    internal enum ChatMessageType
+    {
+        Regular,
+        UserEvent,
+        SystemEvent
+    }
+
     private ScrollContainer _messageRegion;
     private VBoxContainer _messageList;
     private PackedScene _chatMessage;
@@ -20,6 +28,8 @@ public class Chatbox : PanelContainer
     {
         _client = this.GetSingleton<SharpScapeClient>();
         _client.Connect("ChatMessageReceived", this, nameof(_OnChatMessageReceived));
+        _client.Connect("PlayerLoginEvent", this, nameof(_OnPlayerActionEvent), new Godot.Collections.Array { "has logged in" });
+        _client.Connect("PlayerLogoutEvent", this, nameof(_OnPlayerActionEvent), new Godot.Collections.Array { "has logged out" });
 
         _messageRegion = GetNode<ScrollContainer>("MarginContainer/Interface/MessageRegion");
         _messageList = GetNode<VBoxContainer>("MarginContainer/Interface/MessageRegion/MessageList");
@@ -68,21 +78,61 @@ public class Chatbox : PanelContainer
         _input.GrabFocus();
     }
 
+    private void _OnPlayerActionEvent(string playerJson, string action)
+    {
+        var playerInfo = Utils.FromJson<PlayerInfo>(playerJson);
+        AddMessageToList(playerInfo.UserInfo.Username, action, ChatMessageType.SystemEvent);
+    }
     private void _OnChatMessageReceived(string username, string content)
+    {
+        var messageType = ChatMessageType.Regular;
+        if (content.StartsWith("/me "))
+        {
+            content = string.Join(" ", content.Split(" ").Skip(1).ToArray());
+            messageType = ChatMessageType.UserEvent;
+        }
+
+        AddMessageToList(username, content, messageType);
+    }
+    private void AddMessageToList(string username, string content, ChatMessageType messageType)
     {
         if (! _usernameColors.ContainsKey(username))
         {
             _usernameColors[username] = Color.FromHsv(
                 hue: GD.Randf(),
-                saturation: (float) GD.RandRange(0.3f, 0.6f),
-                value: 0.95f
+                saturation: (float) GD.RandRange(0.3f, 0.7f),
+                value: (float) GD.RandRange(0.85f, 0.95f)
                 );
         }
+
         var chatMessage = _chatMessage.Instance();
         var usernameLabel = chatMessage.GetNode<Label>("Username");
-        usernameLabel.Text = $"<{username}>";
-        usernameLabel.AddColorOverride("font_color", _usernameColors[username]);
-        chatMessage.GetNode<Label>("Content").Text = content;
+
+        var contentLabel = chatMessage.GetNode<Label>("Content");
+        switch (messageType)
+        {
+            case ChatMessageType.UserEvent:
+            {
+                usernameLabel.QueueFree();
+                contentLabel.AddColorOverride("font_color", _usernameColors[username]);
+                contentLabel.Text = $"* {username} {content}";
+                break;
+            }
+            case ChatMessageType.SystemEvent:
+            {
+                usernameLabel.QueueFree();
+                contentLabel.AddColorOverride("font_color", Color.FromHsv(0.5f, 0f, 0.4f));
+                contentLabel.Text = $"* {username} {content}";
+                break;
+            }
+            default:
+            {
+                usernameLabel.Text = $"<{username}>";
+                usernameLabel.AddColorOverride("font_color", _usernameColors[username]);
+                contentLabel.Text = content;
+                break;
+            }
+        }
         _messageList.AddChild(chatMessage);
 
         if (_autoScroll.Pressed)
