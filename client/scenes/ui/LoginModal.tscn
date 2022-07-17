@@ -1,80 +1,116 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=2 format=2]
 
 [ext_resource path="res://client/scenes/ui/LoginModal.cs" type="Script" id=1]
 
-[sub_resource type="StyleBoxFlat" id=1]
-bg_color = Color( 0.25098, 0.145098, 0.145098, 1 )
-
-[node name="LoginModal" type="Panel"]
-anchor_left = 0.236
-anchor_top = 0.29
-anchor_right = 0.775
-anchor_bottom = 0.29
-margin_left = 0.335983
-margin_top = -1.52588e-05
-margin_right = 0.399963
-margin_bottom = 244.0
-custom_styles/panel = SubResource( 1 )
+[node name="LoginModal" type="PanelContainer"]
+anchor_left = 0.399
+anchor_top = 0.408
+anchor_right = 0.599
+anchor_bottom = 0.605
+margin_left = -162.08
+margin_top = -57.64
+margin_right = 165.92
+margin_bottom = 43.6
 script = ExtResource( 1 )
+StatusLineNode = NodePath("MarginContainer/VBoxContainer/Statusline")
+UsernameInputNode = NodePath("MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer/Username")
+PasswordInputNode = NodePath("MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer2/Password")
+SubmitButtonNode = NodePath("MarginContainer/VBoxContainer/LoginSubmit")
 
-[node name="Statusline" type="Label" parent="."]
-anchor_left = 0.5
-anchor_right = 0.5
-margin_left = -276.0
-margin_right = 276.0
-margin_bottom = 38.0
+[node name="MarginContainer" type="MarginContainer" parent="."]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 705.0
+margin_bottom = 307.0
+custom_constants/margin_right = 20
+custom_constants/margin_top = 20
+custom_constants/margin_left = 20
+custom_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+margin_left = 20.0
+margin_top = 20.0
+margin_right = 678.0
+margin_bottom = 280.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Statusline" type="Label" parent="MarginContainer/VBoxContainer"]
+margin_right = 658.0
+margin_bottom = 84.0
+size_flags_vertical = 7
 text = "Login"
 align = 1
 valign = 1
 
-[node name="UsernameLabel" type="Label" parent="."]
-anchor_left = 0.17
-anchor_right = 0.5
-margin_left = 0.159996
-margin_top = 74.0
-margin_right = -116.0
-margin_bottom = 88.0
+[node name="VBoxContainer2" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+margin_left = 137.0
+margin_top = 88.0
+margin_right = 521.0
+margin_bottom = 172.0
+size_flags_horizontal = 4
+size_flags_vertical = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/VBoxContainer2"]
+margin_right = 384.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+size_flags_vertical = 4
+
+[node name="UsernameLabel" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer"]
+margin_top = 5.0
+margin_right = 80.0
+margin_bottom = 19.0
+rect_min_size = Vector2( 80, 0 )
 text = "Username"
 
-[node name="Username" type="LineEdit" parent="."]
-anchor_left = 0.16
-anchor_right = 0.844
-margin_left = 81.68
-margin_top = 69.0
-margin_right = 0.111969
-margin_bottom = 93.0
-focus_neighbour_bottom = NodePath("../Password")
-focus_next = NodePath("../Password")
+[node name="Username" type="LineEdit" parent="MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer"]
+margin_left = 84.0
+margin_right = 384.0
+margin_bottom = 24.0
+rect_min_size = Vector2( 300, 0 )
+focus_neighbour_bottom = NodePath("../../HBoxContainer2/Password")
+focus_next = NodePath("../../HBoxContainer2/Password")
+caret_blink = true
+caret_blink_speed = 0.5
 
-[node name="PasswordLabel" type="Label" parent="."]
-anchor_left = 0.17
-anchor_right = 0.17
-margin_left = 0.159996
-margin_top = 102.0
-margin_right = 60.16
-margin_bottom = 116.0
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer/VBoxContainer2"]
+margin_top = 28.0
+margin_right = 384.0
+margin_bottom = 52.0
+size_flags_horizontal = 3
+size_flags_vertical = 4
+
+[node name="PasswordLabel" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer2"]
+margin_top = 5.0
+margin_right = 80.0
+margin_bottom = 19.0
+rect_min_size = Vector2( 80, 0 )
 text = "Password"
 
-[node name="Password" type="LineEdit" parent="."]
-anchor_left = 0.163
-anchor_right = 0.846
-margin_left = 80.024
-margin_top = 97.0
-margin_right = 0.00799561
-margin_bottom = 121.0
-focus_neighbour_top = NodePath("../Username")
-focus_neighbour_bottom = NodePath("../LoginSubmit")
-focus_next = NodePath("../LoginSubmit")
-focus_previous = NodePath("../Username")
+[node name="Password" type="LineEdit" parent="MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer2"]
+margin_left = 84.0
+margin_right = 384.0
+margin_bottom = 24.0
+rect_min_size = Vector2( 300, 0 )
+focus_neighbour_top = NodePath("../../HBoxContainer/Username")
+focus_neighbour_bottom = NodePath("../../../LoginSubmit")
+focus_next = NodePath("../../../LoginSubmit")
+focus_previous = NodePath("../../HBoxContainer/Username")
 secret = true
+secret_character = "×"
+clear_button_enabled = true
+caret_blink = true
+caret_blink_speed = 0.5
 
-[node name="LoginSubmit" type="Button" parent="."]
-anchor_left = 0.5
-anchor_right = 0.5
-margin_left = -47.0
-margin_top = 159.0
-margin_right = 52.0
-margin_bottom = 197.0
-focus_neighbour_top = NodePath("../Password")
-focus_previous = NodePath("../Password")
+[node name="LoginSubmit" type="Button" parent="MarginContainer/VBoxContainer"]
+margin_left = 279.0
+margin_top = 198.0
+margin_right = 379.0
+margin_bottom = 238.0
+rect_min_size = Vector2( 100, 40 )
+focus_neighbour_top = NodePath("../VBoxContainer2/HBoxContainer2/Password")
+focus_previous = NodePath("../VBoxContainer2/HBoxContainer2/Password")
+size_flags_horizontal = 4
+size_flags_vertical = 6
 text = "Submit"

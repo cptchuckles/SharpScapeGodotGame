@@ -4,11 +4,16 @@ using SharpScape.Game.Dto;
 using SharpScape.Game.Services;
 using static SharpScape.Game.NodeExtensions;
 
-public class LoginModal : Panel
+public class LoginModal : PanelContainer
 {
     [Signal] delegate void LoginPayloadReady();
 
     private MPClientCrypto _crypto;
+
+    [Export] private NodePath StatusLineNode;
+    [Export] private NodePath UsernameInputNode;
+    [Export] private NodePath PasswordInputNode;
+    [Export] private NodePath SubmitButtonNode;
 
     private Label _statusline;
     private LineEdit _username;
@@ -18,15 +23,27 @@ public class LoginModal : Panel
 
     public override void _Ready()
     {
-        _statusline = GetNode<Label>("Statusline");
+        _statusline = GetNode<Label>(StatusLineNode);
 
-        _username = GetNode<LineEdit>("Username");
+        _username = GetNode<LineEdit>(UsernameInputNode);
         _username.GrabFocus();
 
-        _password = GetNode<LineEdit>("Password");
+        _password = GetNode<LineEdit>(PasswordInputNode);
 
-        _submit = GetNode<Button>("LoginSubmit");
+        _submit = GetNode<Button>(SubmitButtonNode);
         _submit.Connect("pressed", this, "_OnLoginSubmitPressed");
+    }
+
+    public override void _Input(InputEvent @event)
+    {
+        if (@event is InputEventKey key && key.Pressed && key.Scancode == (uint)KeyList.Enter)
+        {
+            if (_password.HasFocus())
+            {
+                _submit.GrabFocus();
+                _OnLoginSubmitPressed();
+            }
+        }
     }
 
     private void _OnLoginSubmitPressed()
@@ -52,6 +69,8 @@ public class LoginModal : Panel
     public void ErrorRetry(string message)
     {
         _statusline.Text = message;
+        _username.GrabFocus();
+        _password.Text = string.Empty;
         _submit.Text = "Retry";
         _submit.Disabled = false;
     }
