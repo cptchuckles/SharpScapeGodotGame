@@ -2,7 +2,8 @@
 
 [ext_resource path="res://client/scenes/ui/LogoutModal.cs" type="Script" id=1]
 
-[node name="UILayer" type="CanvasLayer"]
+[node name="ModalLayer" type="CanvasLayer"]
+layer = 128
 
 [node name="LogoutModal" type="PanelContainer" parent="."]
 anchor_left = 0.409

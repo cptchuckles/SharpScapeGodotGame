@@ -12,6 +12,7 @@ public class SharpScapeClient : NetworkServiceNode
     [Signal] delegate void AuthenticationResult(bool success);
     [Signal] delegate void PlayerLoginEvent(string playerInfo);
     [Signal] delegate void PlayerLogoutEvent(string playerInfo);
+    [Signal] delegate void ChatMessageReceived(string username, string content);
 
     public int ClientId = -1;
     public WebSocketClient Websocket;
@@ -146,6 +147,7 @@ public class SharpScapeClient : NetworkServiceNode
             }
             case MessageEvent.Message:
             {
+                EmitSignal(nameof(ChatMessageReceived), who, incoming.Data);
                 EmitSignal(nameof(WriteLog), $"<{who}> {incoming.Data}");
                 break;
             }
@@ -176,6 +178,15 @@ public class SharpScapeClient : NetworkServiceNode
                 break;
             }
         }
+    }
+
+    public GameAvatar GetGameAvatar()
+    {
+        if (_players.ContainsKey(ClientId))
+        {
+            return _players[ClientId].Avatar;
+        }
+        return null;
     }
 
     public Error ConnectToUrl(string host, string[] protocols)
@@ -214,7 +225,7 @@ public class SharpScapeClient : NetworkServiceNode
 
         EmitSignal(nameof(WriteLog), "Client has entered the world");
 
-        world.AddChild(GD.Load<PackedScene>("res://client/scenes/ClickInputHandler/ClickInputHandler.tscn").Instance() as ClickInputHandler);
+        world.GetNode("UILayer").AddChild(GD.Load<PackedScene>("res://client/scenes/ui/ClickHandlerChatbox/ClickHandlerChatbox.tscn").Instance());
 
         EmitSignal(nameof(WriteLog), $"Client has {_players.Keys.Count} listings to show");
         foreach (var id in _players.Keys)

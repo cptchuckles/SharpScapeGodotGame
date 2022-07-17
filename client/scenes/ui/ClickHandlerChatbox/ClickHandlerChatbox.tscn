@@ -1,0 +1,132 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://client/scenes/ui/ClickHandlerChatbox/Chatbox.cs" type="Script" id=1]
+[ext_resource path="res://client/scenes/ui/ClickHandlerChatbox/ClickInputHandler.cs" type="Script" id=2]
+[ext_resource path="res://client/scenes/ui/ClickHandlerChatbox/click.png" type="Texture" id=3]
+[ext_resource path="res://client/scenes/ui/ClickHandlerChatbox/MessageList.cs" type="Script" id=5]
+
+[node name="ClickInputHandler" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 2 )
+
+[node name="ClickMarker" type="Sprite" parent="."]
+visible = false
+texture = ExtResource( 3 )
+
+[node name="VSplitContainer" type="VSplitContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+mouse_default_cursor_shape = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+dragger_visibility = 2
+
+[node name="TopEmpty" type="Control" parent="VSplitContainer"]
+margin_right = 1920.0
+margin_bottom = 720.0
+mouse_filter = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+
+[node name="HSplitContainer" type="HSplitContainer" parent="VSplitContainer"]
+margin_top = 720.0
+margin_right = 1920.0
+margin_bottom = 1080.0
+mouse_filter = 1
+size_flags_horizontal = 3
+size_flags_vertical = 3
+dragger_visibility = 2
+
+[node name="Chatbox" type="PanelContainer" parent="VSplitContainer/HSplitContainer"]
+margin_right = 1066.0
+margin_bottom = 360.0
+rect_min_size = Vector2( 400, 55 )
+size_flags_horizontal = 3
+size_flags_vertical = 11
+script = ExtResource( 1 )
+
+[node name="MarginContainer" type="MarginContainer" parent="VSplitContainer/HSplitContainer/Chatbox"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 1059.0
+margin_bottom = 353.0
+size_flags_horizontal = 3
+size_flags_vertical = 11
+custom_constants/margin_right = 4
+custom_constants/margin_top = 4
+custom_constants/margin_left = 4
+custom_constants/margin_bottom = 4
+
+[node name="Interface" type="VBoxContainer" parent="VSplitContainer/HSplitContainer/Chatbox/MarginContainer"]
+margin_left = 4.0
+margin_top = 4.0
+margin_right = 1048.0
+margin_bottom = 342.0
+size_flags_vertical = 11
+
+[node name="MessageRegion" type="ScrollContainer" parent="VSplitContainer/HSplitContainer/Chatbox/MarginContainer/Interface"]
+margin_right = 1044.0
+margin_bottom = 310.0
+size_flags_horizontal = 3
+size_flags_vertical = 11
+scroll_horizontal_enabled = false
+
+[node name="MessageList" type="VBoxContainer" parent="VSplitContainer/HSplitContainer/Chatbox/MarginContainer/Interface/MessageRegion"]
+margin_right = 1044.0
+margin_bottom = 310.0
+mouse_filter = 0
+mouse_default_cursor_shape = 11
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource( 5 )
+VerticalSizerNode = NodePath("../../../../../..")
+HorizontalSizerNode = NodePath("../../../../..")
+
+[node name="UserControls" type="HBoxContainer" parent="VSplitContainer/HSplitContainer/Chatbox/MarginContainer/Interface"]
+margin_top = 314.0
+margin_right = 1044.0
+margin_bottom = 338.0
+size_flags_vertical = 9
+
+[node name="Username" type="Label" parent="VSplitContainer/HSplitContainer/Chatbox/MarginContainer/Interface/UserControls"]
+margin_top = 5.0
+margin_right = 60.0
+margin_bottom = 19.0
+text = "Message:"
+
+[node name="Input" type="LineEdit" parent="VSplitContainer/HSplitContainer/Chatbox/MarginContainer/Interface/UserControls"]
+margin_left = 64.0
+margin_right = 870.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+max_length = 256
+caret_blink = true
+caret_blink_speed = 0.5
+
+[node name="SubmitButton" type="Button" parent="VSplitContainer/HSplitContainer/Chatbox/MarginContainer/Interface/UserControls"]
+margin_left = 874.0
+margin_right = 946.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.09
+text = "Send"
+
+[node name="AutoScroll" type="CheckBox" parent="VSplitContainer/HSplitContainer/Chatbox/MarginContainer/Interface/UserControls"]
+margin_left = 950.0
+margin_right = 1043.0
+margin_bottom = 24.0
+pressed = true
+text = "AutoScroll"
+
+[node name="RightEmpty" type="Control" parent="VSplitContainer/HSplitContainer"]
+margin_left = 1066.0
+margin_right = 1920.0
+margin_bottom = 360.0
+mouse_filter = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.8
