@@ -19,7 +19,6 @@ public class Chatbox : PanelContainer
     private LineEdit _input;
     private Button _submitButton;
     private CheckBox _autoScroll;
-    private CheckButton _showChat;
 
     private SharpScapeClient _client;
     private UsernameColors _usernameColors = new UsernameColors();
@@ -33,29 +32,14 @@ public class Chatbox : PanelContainer
 
         _messageRegion = GetNode<ScrollContainer>("MarginContainer/Interface/MessageRegion");
         _messageList = GetNode<VBoxContainer>("MarginContainer/Interface/MessageRegion/MessageList");
-        _chatMessage = GD.Load<PackedScene>("res://client/scenes/ui/Chatbox/ChatMessage.tscn");
+        _chatMessage = GD.Load<PackedScene>("res://client/scenes/ui/ClickHandlerChatbox/ChatMessage.tscn");
 
         _input = GetNode<LineEdit>("MarginContainer/Interface/UserControls/Input");
         _submitButton = GetNode<Button>("MarginContainer/Interface/UserControls/SubmitButton");
         _autoScroll = GetNode<CheckBox>("MarginContainer/Interface/UserControls/AutoScroll");
-        _showChat = GetNode<CheckButton>("MarginContainer/Interface/UserControls/ShowChat");
-        _showChat.Connect("toggled", this, nameof(_OnShowChatToggled));
 
         _input.GrabFocus();
         _submitButton.Connect("pressed", this, nameof(SendChatMessage));
-    }
-
-    private void _OnShowChatToggled(bool enabled)
-    {
-        if (enabled)
-        {
-            MarginTop = -300f;
-        }
-        else
-        {
-            MarginTop = -66f;
-        }
-        _input.GrabFocus();
     }
 
     public override void _Input(InputEvent @event)

@@ -180,6 +180,15 @@ public class SharpScapeClient : NetworkServiceNode
         }
     }
 
+    public GameAvatar GetGameAvatar()
+    {
+        if (_players.ContainsKey(ClientId))
+        {
+            return _players[ClientId].Avatar;
+        }
+        return null;
+    }
+
     public Error ConnectToUrl(string host, string[] protocols)
     {
         return Websocket.ConnectToUrl(host, protocols);
@@ -216,8 +225,7 @@ public class SharpScapeClient : NetworkServiceNode
 
         EmitSignal(nameof(WriteLog), "Client has entered the world");
 
-        world.AddChild(GD.Load<PackedScene>("res://client/scenes/ui/ClickInputHandler/ClickInputHandler.tscn").Instance() as ClickInputHandler);
-        world.GetNode("UILayer").AddChild(GD.Load<PackedScene>("res://client/scenes/ui/Chatbox/Chatbox.tscn").Instance());
+        world.GetNode("UILayer").AddChild(GD.Load<PackedScene>("res://client/scenes/ui/ClickHandlerChatbox/ClickHandlerChatbox.tscn").Instance());
 
         EmitSignal(nameof(WriteLog), $"Client has {_players.Keys.Count} listings to show");
         foreach (var id in _players.Keys)
