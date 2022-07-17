@@ -20,4 +20,4 @@ tile_data = PoolIntArray( -131053, 2, 65538, -65536, 3, 0, -65535, 3, 0, -65534,
 script = ExtResource( 1 )
 
 [node name="UILayer" type="CanvasLayer" parent="."]
-layer = 128
+layer = 5

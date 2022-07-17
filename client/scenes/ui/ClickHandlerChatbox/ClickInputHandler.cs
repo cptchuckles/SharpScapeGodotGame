@@ -39,7 +39,12 @@ public class ClickInputHandler : Control
             var moveRequest = new MessageDto(MessageEvent.Movement, Convert.ToBase64String(destData));
             _client.SendData(Utils.ToJson(moveRequest));
         }
-        else if (inputEvent.IsActionPressed("ui_cancel"))
+    }
+    public override void _Input(InputEvent inputEvent)
+    {
+        if (_modalOpen) return;
+
+        if (inputEvent.IsActionPressed("ui_cancel"))
         {
             var modal = GD.Load<PackedScene>("res://client/scenes/ui/LogoutModal.tscn").Instance();
             modal.Connect("tree_exited", this, "set", new Godot.Collections.Array {"_modalOpen", false});
