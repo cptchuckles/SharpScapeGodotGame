@@ -31,12 +31,10 @@ align = 1
 [node name="CharacterSprites" type="Position2D" parent="."]
 
 [node name="Default" type="AnimatedSprite" parent="CharacterSprites"]
-visible = false
 position = Vector2( 0, -28 )
 scale = Vector2( 2, 2 )
 frames = ExtResource( 1 )
 animation = "idle"
-frame = 2
 playing = true
 
 [node name="KitCat" type="AnimatedSprite" parent="CharacterSprites"]
@@ -62,7 +60,7 @@ position = Vector2( -2, -28 )
 scale = Vector2( 1.88235, 1.75 )
 frames = ExtResource( 5 )
 animation = "run"
-frame = 3
 playing = true
 
 [node name="SpeechBubble" parent="." instance=ExtResource( 6 )]
+position = Vector2( 0, -56 )
