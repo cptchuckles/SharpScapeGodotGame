@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://shared/Scenes/GameAvatar/Sprites/default.tres" type="SpriteFrames" id=1]
 [ext_resource path="res://shared/Scenes/GameAvatar/GameAvatar.cs" type="Script" id=2]
 [ext_resource path="res://shared/Scenes/GameAvatar/Sprites/Kit_Cat.tres" type="SpriteFrames" id=3]
 [ext_resource path="res://shared/Scenes/GameAvatar/Sprites/rat.tres" type="SpriteFrames" id=4]
 [ext_resource path="res://shared/Scenes/GameAvatar/Sprites/worm.tres" type="SpriteFrames" id=5]
+[ext_resource path="res://shared/Scenes/GameAvatar/SpeechBubble.tscn" type="PackedScene" id=6]
 
 [sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 19, 8 )
@@ -35,7 +36,7 @@ position = Vector2( 0, -28 )
 scale = Vector2( 2, 2 )
 frames = ExtResource( 1 )
 animation = "idle"
-frame = 9
+frame = 2
 playing = true
 
 [node name="KitCat" type="AnimatedSprite" parent="CharacterSprites"]
@@ -63,3 +64,5 @@ frames = ExtResource( 5 )
 animation = "run"
 frame = 3
 playing = true
+
+[node name="SpeechBubble" parent="." instance=ExtResource( 6 )]
