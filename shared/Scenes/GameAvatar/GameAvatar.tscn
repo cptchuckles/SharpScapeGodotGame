@@ -36,7 +36,7 @@ position = Vector2( 0, -28 )
 scale = Vector2( 2, 2 )
 frames = ExtResource( 1 )
 animation = "idle"
-frame = 1
+frame = 2
 playing = true
 
 [node name="KitCat" type="AnimatedSprite" parent="CharacterSprites"]
@@ -45,7 +45,7 @@ position = Vector2( 6, -46 )
 scale = Vector2( 2, 2 )
 frames = ExtResource( 3 )
 animation = "run"
-frame = 5
+frame = 2
 playing = true
 
 [node name="Birdie" type="AnimatedSprite" parent="CharacterSprites"]
@@ -62,7 +62,7 @@ position = Vector2( 7, -57 )
 scale = Vector2( 3.65625, 3.65625 )
 frames = ExtResource( 4 )
 animation = "idle"
-frame = 1
+frame = 2
 playing = true
 
 [node name="Worm" type="AnimatedSprite" parent="CharacterSprites"]
