@@ -20,7 +20,6 @@ public class SharpScapeClient : NetworkServiceNode
 	private bool _tryingAuthenticate = false;
 
 	private PlayersById _players = new PlayersById();
-	private const float DURATION = 3.0F;
 
 	public override void _Ready()
 	{
@@ -82,7 +81,6 @@ public class SharpScapeClient : NetworkServiceNode
 
 	public void _ClientConnected(string protocol)
 	{
-		EmitSignal(nameof(WriteLog), $"Client just connected with protocol: {protocol}");
 		Websocket.GetPeer(1).SetWriteMode(_writeMode);
 	}
 
@@ -102,7 +100,6 @@ public class SharpScapeClient : NetworkServiceNode
 		var isString = Websocket.GetPeer(1).WasStringPacket();
 
 		var packetText = (string) Utils.DecodeData(packet, isString);
-		GD.Print($"Received data. BINARY: {!isString} DATA: {packetText}");
 
 		var incoming = Utils.FromJson<MessageDto>(packetText);
 		if (incoming is null) return;
@@ -150,21 +147,35 @@ public class SharpScapeClient : NetworkServiceNode
 			{
 				EmitSignal(nameof(ChatMessageReceived), who, incoming.Data);
 				EmitSignal(nameof(WriteLog), $"<{who}> {incoming.Data}");
-				var player = _players[incoming.ClientId].Avatar;
-				if (IsInstanceValid(player))
+				if (_players.ContainsKey(incoming.ClientId))
 				{
-					player.SetText($"{incoming.Data}", DURATION);
+					var player = _players[incoming.ClientId].Avatar;
+					if (IsInstanceValid(player))
+					{
+						player.SetSpeechBubbleText(incoming.Data);
+					}
 				}
 				break;
 			}
 			case MessageEvent.Movement:
 			{
-				var dest = (Vector2) GD.Bytes2Var(Convert.FromBase64String(incoming.Data));
-				GD.Print($"{who} is moving to {dest.ToString()}");
-				var player = _players[incoming.ClientId].Avatar;
-				if (IsInstanceValid(player))
+				var dest = Vector2.Zero;
+				try
 				{
-					player.MoveTo(dest);
+					dest = (Vector2) GD.Bytes2Var(Convert.FromBase64String(incoming.Data));
+				}
+				catch (InvalidCastException)
+				{
+					break;
+				}
+
+				if (_players.ContainsKey(incoming.ClientId))
+				{
+					var player = _players[incoming.ClientId].Avatar;
+					if (IsInstanceValid(player))
+					{
+						player.MoveTo(dest);
+					}
 				}
 				break;
 			}
@@ -176,11 +187,6 @@ public class SharpScapeClient : NetworkServiceNode
 					EmitSignal(nameof(PlayerLogoutEvent), Utils.ToJson(_players[incoming.ClientId]));
 					_players.Remove(incoming.ClientId);
 				}
-				break;
-			}
-			default:
-			{
-				EmitSignal(nameof(WriteLog), $"Received event: {Utils.ToJson(incoming)}");
 				break;
 			}
 		}
