@@ -20,6 +20,7 @@ public class SharpScapeClient : NetworkServiceNode
 	private bool _tryingAuthenticate = false;
 
 	private PlayersById _players = new PlayersById();
+	private const float DURATION = 3.0F;
 
 	public override void _Ready()
 	{
@@ -147,6 +148,11 @@ public class SharpScapeClient : NetworkServiceNode
 			{
 				EmitSignal(nameof(ChatMessageReceived), who, incoming.Data);
 				EmitSignal(nameof(WriteLog), $"<{who}> {incoming.Data}");
+				var player = _players[incoming.ClientId].Avatar;
+				if (IsInstanceValid(player))
+				{
+					player.SetText($"{incoming.Data}", DURATION);
+				}
 				break;
 			}
 			case MessageEvent.Movement:
