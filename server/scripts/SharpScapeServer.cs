@@ -32,6 +32,14 @@ public class SharpScapeServer : NetworkServiceNode
         _server.Connect("client_close_request", this, nameof(_ClientCloseRequest));
         _server.Connect("data_received", this, nameof(_ClientReceive));
         Connect(nameof(WriteLog), this, nameof(_OnWriteLog));
+        Connect(nameof(PlayerLoginEvent), this, nameof(_OnPlayerAccountEvent), new Godot.Collections.Array {"logged in"});
+        Connect(nameof(PlayerLogoutEvent), this, nameof(_OnPlayerAccountEvent), new Godot.Collections.Array {"logged out"});
+    }
+
+    private void _OnPlayerAccountEvent(string playerInfo, string what)
+    {
+        var player = Utils.FromJson<PlayerInfo>(playerInfo);
+        EmitSignal(nameof(WriteLog), $"* {player.UserInfo.Username} {what}");
     }
 
     private void _OnWriteLog(string msg)
@@ -90,7 +98,6 @@ public class SharpScapeServer : NetworkServiceNode
         var packet = _server.GetPeer(id).GetPacket();
         var isString = _server.GetPeer(id).WasStringPacket();
         var packetText = (string) Utils.DecodeData(packet, isString);
-        EmitSignal(nameof(WriteLog), $"Data from {id} BINARY: {!isString}: {packetText}");
         
         var incoming = Utils.FromJson<MessageDto>(packetText);
         if (incoming is null) return;
@@ -107,13 +114,13 @@ public class SharpScapeServer : NetworkServiceNode
             }
             case MessageEvent.Message:
             {
-                EmitSignal(nameof(WriteLog), $"<{who}> {incoming.Data}");
+                EmitSignal(nameof(WriteLog), $"<{who}({id})> {incoming.Data}");
                 break;
             }
             case MessageEvent.Movement:
             {
                 var dest = (Vector2) GD.Bytes2Var(Convert.FromBase64String(incoming.Data));
-                GD.Print($"{who} is moving to {dest.ToString()}");
+                EmitSignal(nameof(WriteLog), $"* {who} is moving to {dest.ToString()}");
                 var player = _players[id].Avatar;
                 if (IsInstanceValid(player))
                 {
@@ -136,21 +143,22 @@ public class SharpScapeServer : NetworkServiceNode
     }
     private void TrySavePlayerInfo(PlayerInfo playerInfo)
     {
+        EmitSignal(nameof(WriteLog), $"Saving player info for {playerInfo.UserInfo.Username}...");
         var playerSaveJson = Utils.ToJson(new PlayerSaveDto(playerInfo));
         var playerSaveString = Convert.ToBase64String(Encoding.UTF8.GetBytes(playerSaveJson));
-        var message = SignAndDate(playerSaveString);
+        var payload = SignAndDate(playerSaveString);
         var saveRequest = new MPServerHttp();
         AddChild(saveRequest);
-        saveRequest.SavePlayerInfo(message);
+        saveRequest.SavePlayerInfo(payload);
     }
-    private void TryAuthenticateClient(int clientId, string payload)
+    private void TryAuthenticateClient(int clientId, string secureCredentials)
     {
-        var message = SignAndDate(payload);
-        var http = new MPServerHttp(clientId);
-        http.Connect("ApiLoginSuccess", this, nameof(_OnApiLoginSuccess));
-        http.Connect("ApiLoginFailure", this, nameof(_OnApiLoginFailure));
-        AddChild(http);
-        http.Authenticate(message);
+        var payload = SignAndDate(secureCredentials);
+        var loginRequest = new MPServerHttp(clientId);
+        loginRequest.Connect("ApiLoginSuccess", this, nameof(_OnApiLoginSuccess));
+        loginRequest.Connect("ApiLoginFailure", this, nameof(_OnApiLoginFailure));
+        AddChild(loginRequest);
+        loginRequest.Authenticate(payload);
     }
     private void _OnApiLoginSuccess(int clientId, string responseBody)
     {

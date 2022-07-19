@@ -81,7 +81,6 @@ public class SharpScapeClient : NetworkServiceNode
 
     public void _ClientConnected(string protocol)
     {
-        EmitSignal(nameof(WriteLog), $"Client just connected with protocol: {protocol}");
         Websocket.GetPeer(1).SetWriteMode(_writeMode);
     }
 
@@ -101,7 +100,6 @@ public class SharpScapeClient : NetworkServiceNode
         var isString = Websocket.GetPeer(1).WasStringPacket();
 
         var packetText = (string) Utils.DecodeData(packet, isString);
-        GD.Print($"Received data. BINARY: {!isString} DATA: {packetText}");
 
         var incoming = Utils.FromJson<MessageDto>(packetText);
         if (incoming is null) return;
@@ -154,11 +152,13 @@ public class SharpScapeClient : NetworkServiceNode
             case MessageEvent.Movement:
             {
                 var dest = (Vector2) GD.Bytes2Var(Convert.FromBase64String(incoming.Data));
-                GD.Print($"{who} is moving to {dest.ToString()}");
-                var player = _players[incoming.ClientId].Avatar;
-                if (IsInstanceValid(player))
+                if (_players.ContainsKey(incoming.ClientId))
                 {
-                    player.MoveTo(dest);
+                    var player = _players[incoming.ClientId].Avatar;
+                    if (IsInstanceValid(player))
+                    {
+                        player.MoveTo(dest);
+                    }
                 }
                 break;
             }
@@ -170,11 +170,6 @@ public class SharpScapeClient : NetworkServiceNode
                     EmitSignal(nameof(PlayerLogoutEvent), Utils.ToJson(_players[incoming.ClientId]));
                     _players.Remove(incoming.ClientId);
                 }
-                break;
-            }
-            default:
-            {
-                EmitSignal(nameof(WriteLog), $"Received event: {Utils.ToJson(incoming)}");
                 break;
             }
         }
