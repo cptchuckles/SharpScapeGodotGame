@@ -20,7 +20,6 @@ public class SharpScapeClient : NetworkServiceNode
 	private bool _tryingAuthenticate = false;
 
 	private PlayersById _players = new PlayersById();
-	private const float DURATION = 3.0F;
 
 	public override void _Ready()
 	{
@@ -148,16 +147,28 @@ public class SharpScapeClient : NetworkServiceNode
 			{
 				EmitSignal(nameof(ChatMessageReceived), who, incoming.Data);
 				EmitSignal(nameof(WriteLog), $"<{who}> {incoming.Data}");
-				var player = _players[incoming.ClientId].Avatar;
-				if (IsInstanceValid(player))
+				if (_players.ContainsKey(incoming.ClientId))
 				{
-					player.SetText($"{incoming.Data}", DURATION);
+					var player = _players[incoming.ClientId].Avatar;
+					if (IsInstanceValid(player))
+					{
+						player.SetSpeechBubbleText(incoming.Data);
+					}
 				}
 				break;
 			}
 			case MessageEvent.Movement:
 			{
-				var dest = (Vector2) GD.Bytes2Var(Convert.FromBase64String(incoming.Data));
+				var dest = Vector2.Zero;
+				try
+				{
+					dest = (Vector2) GD.Bytes2Var(Convert.FromBase64String(incoming.Data));
+				}
+				catch (InvalidCastException)
+				{
+					break;
+				}
+
 				if (_players.ContainsKey(incoming.ClientId))
 				{
 					var player = _players[incoming.ClientId].Avatar;

@@ -119,12 +119,24 @@ public class SharpScapeServer : NetworkServiceNode
             }
             case MessageEvent.Movement:
             {
-                var dest = (Vector2) GD.Bytes2Var(Convert.FromBase64String(incoming.Data));
-                EmitSignal(nameof(WriteLog), $"* {who} is moving to {dest.ToString()}");
-                var player = _players[id].Avatar;
-                if (IsInstanceValid(player))
+                var dest = Vector2.Zero;
+                try
                 {
-                    player.MoveTo(dest);
+                    dest = (Vector2) GD.Bytes2Var(Convert.FromBase64String(incoming.Data));
+                }
+                catch (InvalidCastException)
+                {
+                    break;
+                }
+
+                if (_players.ContainsKey(id))
+                {
+                    var player = _players[id].Avatar;
+                    if (IsInstanceValid(player))
+                    {
+                        EmitSignal(nameof(WriteLog), $"* {who} is moving to {dest.ToString()}");
+                        player.MoveTo(dest);
+                    }
                 }
                 break;
             }
