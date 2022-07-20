@@ -9,14 +9,13 @@
 [ext_resource path="res://shared/Scenes/GameAvatar/Sprites/Cat2.tres" type="SpriteFrames" id=7]
 [ext_resource path="res://shared/Scenes/GameAvatar/SpeechBubble.tscn" type="PackedScene" id=8]
 
-[sub_resource type="RectangleShape2D" id=1]
-extents = Vector2( 19, 8 )
+[sub_resource type="CapsuleShape2D" id=1]
 
 [node name="GameAvatar" type="KinematicBody2D" groups=["Players"]]
 script = ExtResource( 2 )
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2( 0, -4 )
+rotation = 1.57079
 shape = SubResource( 1 )
 
 [node name="PlayerCamera" type="Camera2D" parent="."]
@@ -38,7 +37,7 @@ position = Vector2( 0, -28 )
 scale = Vector2( 2, 2 )
 frames = ExtResource( 1 )
 animation = "idle"
-frame = 3
+frame = 8
 playing = true
 
 [node name="Cat2" type="AnimatedSprite" parent="CharacterSprites"]
@@ -47,6 +46,7 @@ position = Vector2( 10, -47 )
 scale = Vector2( 2, 2 )
 frames = ExtResource( 7 )
 animation = "idle"
+frame = 3
 playing = true
 
 [node name="KitCat" type="AnimatedSprite" parent="CharacterSprites"]
@@ -55,7 +55,6 @@ position = Vector2( 6, -46 )
 scale = Vector2( 2, 2 )
 frames = ExtResource( 3 )
 animation = "run"
-frame = 4
 playing = true
 
 [node name="Birdie" type="AnimatedSprite" parent="CharacterSprites"]
@@ -64,7 +63,7 @@ position = Vector2( 8, -49 )
 scale = Vector2( 3.14063, 3.15625 )
 frames = ExtResource( 6 )
 animation = "idle"
-frame = 3
+frame = 2
 playing = true
 
 [node name="Rat" type="AnimatedSprite" parent="CharacterSprites"]
@@ -73,6 +72,7 @@ position = Vector2( 7, -57 )
 scale = Vector2( 3.65625, 3.65625 )
 frames = ExtResource( 4 )
 animation = "idle"
+frame = 2
 playing = true
 
 [node name="Worm" type="AnimatedSprite" parent="CharacterSprites"]
@@ -81,7 +81,6 @@ position = Vector2( -2, -28 )
 scale = Vector2( 1.88235, 1.75 )
 frames = ExtResource( 5 )
 animation = "run"
-frame = 3
 playing = true
 
 [node name="SpeechBubble" parent="." instance=ExtResource( 8 )]
