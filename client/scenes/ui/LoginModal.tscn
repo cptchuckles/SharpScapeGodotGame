@@ -15,7 +15,8 @@ script = ExtResource( 1 )
 StatusLineNode = NodePath("MarginContainer/VBoxContainer/Statusline")
 UsernameInputNode = NodePath("MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer/Username")
 PasswordInputNode = NodePath("MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer2/Password")
-SubmitButtonNode = NodePath("MarginContainer/VBoxContainer/LoginSubmit")
+SubmitButtonNode = NodePath("MarginContainer/VBoxContainer/HBoxContainer/LoginSubmit")
+RegisterButtonNode = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Register")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 margin_left = 7.0
@@ -39,7 +40,7 @@ size_flags_vertical = 3
 margin_right = 658.0
 margin_bottom = 84.0
 size_flags_vertical = 7
-text = "Login"
+text = "Welcome"
 align = 1
 valign = 1
 
@@ -94,8 +95,8 @@ margin_right = 384.0
 margin_bottom = 24.0
 rect_min_size = Vector2( 300, 0 )
 focus_neighbour_top = NodePath("../../HBoxContainer/Username")
-focus_neighbour_bottom = NodePath("../../../LoginSubmit")
-focus_next = NodePath("../../../LoginSubmit")
+focus_neighbour_bottom = NodePath("../../../HBoxContainer/LoginSubmit")
+focus_next = NodePath("../../../HBoxContainer/LoginSubmit")
 focus_previous = NodePath("../../HBoxContainer/Username")
 secret = true
 secret_character = "×"
@@ -103,14 +104,45 @@ clear_button_enabled = true
 caret_blink = true
 caret_blink_speed = 0.5
 
-[node name="LoginSubmit" type="Button" parent="MarginContainer/VBoxContainer"]
-margin_left = 279.0
-margin_top = 198.0
-margin_right = 379.0
-margin_bottom = 238.0
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+margin_left = 205.0
+margin_top = 176.0
+margin_right = 453.0
+margin_bottom = 260.0
+size_flags_horizontal = 6
+size_flags_vertical = 3
+
+[node name="LoginSubmit" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+margin_top = 22.0
+margin_right = 100.0
+margin_bottom = 62.0
 rect_min_size = Vector2( 100, 40 )
-focus_neighbour_top = NodePath("../VBoxContainer2/HBoxContainer2/Password")
-focus_previous = NodePath("../VBoxContainer2/HBoxContainer2/Password")
-size_flags_horizontal = 4
+focus_neighbour_top = NodePath("../../VBoxContainer2/HBoxContainer2/Password")
+focus_neighbour_right = NodePath("../Register")
+focus_next = NodePath("../Register")
+focus_previous = NodePath("../../VBoxContainer2/HBoxContainer2/Password")
+size_flags_horizontal = 6
 size_flags_vertical = 6
-text = "Submit"
+text = "Login"
+
+[node name="ButtonSpacer" type="MarginContainer" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+margin_left = 104.0
+margin_right = 144.0
+margin_bottom = 84.0
+rect_min_size = Vector2( 40, 0 )
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Register" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+margin_left = 148.0
+margin_top = 22.0
+margin_right = 248.0
+margin_bottom = 62.0
+rect_min_size = Vector2( 100, 40 )
+focus_neighbour_left = NodePath("../LoginSubmit")
+focus_neighbour_top = NodePath("../../VBoxContainer2/HBoxContainer2/Password")
+focus_next = NodePath("../../VBoxContainer2/HBoxContainer/Username")
+focus_previous = NodePath("../LoginSubmit")
+size_flags_horizontal = 6
+size_flags_vertical = 6
+text = "Register"

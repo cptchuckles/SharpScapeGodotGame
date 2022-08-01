@@ -1,5 +1,5 @@
+using System;
 using Godot;
-using Newtonsoft.Json;
 using SharpScape.Game.Dto;
 using SharpScape.Game.Services;
 using static SharpScape.Game.NodeExtensions;
@@ -14,11 +14,13 @@ public class LoginModal : PanelContainer
     [Export] private NodePath UsernameInputNode;
     [Export] private NodePath PasswordInputNode;
     [Export] private NodePath SubmitButtonNode;
+    [Export] private NodePath RegisterButtonNode;
 
     private Label _statusline;
     private LineEdit _username;
     private LineEdit _password;
     private Button _submit;
+    private Button _register;
     public string SecurePayload;
 
     public override void _Ready()
@@ -32,6 +34,13 @@ public class LoginModal : PanelContainer
 
         _submit = GetNode<Button>(SubmitButtonNode);
         _submit.Connect("pressed", this, "_OnLoginSubmitPressed");
+        _register = GetNode<Button>(RegisterButtonNode);
+        _register.Connect("pressed", this, nameof(_OnRegisterPressed));
+    }
+
+    private void _OnRegisterPressed()
+    {
+        OS.ShellOpen($"{Utils.GetSharpScapeDomain(includeProto: true)}/register");
     }
 
     public override void _Input(InputEvent @event)
