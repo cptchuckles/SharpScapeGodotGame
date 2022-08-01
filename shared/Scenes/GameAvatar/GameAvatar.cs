@@ -48,7 +48,7 @@ public class GameAvatar : KinematicBody2D
 		if (! InMotion) return;
 
 		var movement = GlobalPosition.MoveToward(Destination, _speed * delta) - GlobalPosition;
-		var result = MoveAndCollide(movement);
+		var result = MoveAndSlide(movement / delta);
 		_characterSprite.FlipH = Vector2.Right.Dot(movement) < 0f;
 
 		if (Mathf.IsEqualApprox(GlobalPosition.DistanceTo(Destination), 0f))
